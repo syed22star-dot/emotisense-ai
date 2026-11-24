@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.env
+.env.local
+venv/
+.venv/
+*.log
+.DS_Store
+.vercel
+confusion_matrix.png
