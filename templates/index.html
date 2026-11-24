@@ -1,29 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="author" content="Syed Tahir Ahamed R" />
-  <meta name="description" content="EmotiSense AI v2 — Multi-Model Affective NLP Engine (BoW+LR 89.84% Test Winner), Inline XAI Token Heatmap, Batch Journal Screening & 1-on-1 EmotiAgent AI." />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="EmotiSense AI v2 — Emotion Classification &amp; NLP Intelligence" />
-  <meta property="og:description" content="Validated sklearn 1.8.0 BoW + Logistic Regression (89.84% test), 4-model consensus arena, batch journal automation, and interactive LLM agent." />
-  <title>EmotiSense AI v2 | Affective NLP Studio &amp; AI Agent</title>
+  <meta name="description" content="EmotiSense AI — Bright Everyday Emotion Detection, 4-Model NLP Consensus Arena, Vocabulary Explorer & Proactive EmotiCoach AI." />
+  <title>EmotiSense AI | Emotion Studio &amp; NLP Research Lab</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Space Grotesk', 'sans-serif'],
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
           }
         }
@@ -32,85 +27,85 @@
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body class="antialiased selection:bg-indigo-500/30 selection:text-white">
+<body class="antialiased">
 
   <!-- Agent Settings Modal -->
-  <div id="agent-settings-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-indigo-500/30 space-y-4">
+  <div id="agent-settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="soft-panel rounded-2xl max-w-md w-full p-6 space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-400"></i>
-          <h3 class="font-display font-bold text-white text-base">EmotiAgent AI Configuration</h3>
+          <i data-lucide="key-round" class="w-4 h-4 text-violet-700"></i>
+          <h3 class="font-bold text-slate-900 text-base">EmotiCoach AI · Optional LLM Key</h3>
         </div>
-        <button onclick="closeAgentSettings()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button onclick="closeAgentSettings()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
-      <p class="text-xs text-slate-400 leading-relaxed">
-        In production (Render / Vercel), set <code class="font-mono text-indigo-300">GEMINI_API_KEY</code> or <code class="font-mono text-indigo-300">OPENAI_API_KEY</code> in environment variables. For instant browser testing, supply a session key below (stored only in <code class="font-mono text-slate-300">sessionStorage</code>).
+      <p class="text-xs text-slate-600 leading-relaxed">
+        EmotiCoach works immediately with built-in guided NLP triage. To unlock open-ended <strong>Gemini 4 Hydrogen</strong> or <strong>OpenAI</strong> conversations &amp; custom tone rewrites, set <code class="font-mono text-violet-700">GEMINI_API_KEY</code> in Render env vars or paste a session key below:
       </p>
       <div class="space-y-3">
         <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Provider</label>
-          <select id="agent-provider-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+          <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Provider</label>
+          <select id="agent-provider-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-violet-600">
             <option value="gemini">Google Gemini (gemini-4-hydrogen)</option>
             <option value="openai">OpenAI (gpt-4o-mini)</option>
           </select>
         </div>
         <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Optional Session API Key</label>
-          <input type="password" id="agent-apikey-input" placeholder="Leave blank if configured in Render/Vercel env vars" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-indigo-500" />
+          <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Session API Key (Optional)</label>
+          <input type="password" id="agent-apikey-input" placeholder="Paste Gemini or OpenAI API key" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 outline-none focus:border-violet-600" />
         </div>
       </div>
       <div class="flex items-center justify-between pt-2">
-        <button onclick="clearAgentKey()" class="text-xs text-rose-400 hover:text-rose-300 font-medium">Clear Session Key</button>
+        <button onclick="clearAgentKey()" class="text-xs text-rose-600 font-semibold">Clear Key</button>
         <div class="flex gap-2">
-          <button onclick="closeAgentSettings()" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
-          <button onclick="saveAgentSettings()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">Save Settings</button>
+          <button onclick="closeAgentSettings()" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-500">Cancel</button>
+          <button onclick="saveAgentSettings()" class="px-4 py-2 rounded-lg bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold">Save</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Top Header -->
-  <header class="sticky top-0 z-30 border-b border-slate-800/70 bg-slate-950/75 backdrop-blur-xl">
+  <!-- Top Navigation -->
+  <header class="sticky top-0 z-30 border-b border-purple-100 bg-white/85 backdrop-blur-xl">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/25 to-pink-500/25 border border-indigo-500/35 flex items-center justify-center">
-            <i data-lucide="sparkles" class="w-5 h-5 text-pink-400"></i>
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-pink-600 flex items-center justify-center shadow-sm">
+            <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-lg sm:text-xl font-bold font-display text-white tracking-tight">EmotiSense AI</h1>
-              <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">v2.0</span>
+              <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">EmotiSense AI</h1>
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-violet-50 text-violet-800 border border-violet-200">Lavender Edition</span>
             </div>
-            <div id="header-health-pill" class="text-[11px] text-slate-400 flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div id="header-health-pill" class="text-[11px] text-slate-500 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Initializing NLP Engine...</span>
             </div>
           </div>
         </div>
-        <button onclick="toggleAgentDrawer()" class="lg:hidden px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1.5">
-          <i data-lucide="bot" class="w-4 h-4"></i> AI Agent
+        <button onclick="toggleAgentDrawer()" class="lg:hidden px-3 py-2 rounded-xl bg-violet-700 text-white text-xs font-bold flex items-center gap-1.5">
+          <i data-lucide="bot" class="w-4 h-4"></i> Ask Coach
         </button>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <nav class="flex flex-wrap bg-slate-900/80 p-1 rounded-xl border border-slate-800/80 gap-1" aria-label="Workspace Tabs">
-          <button id="tab-btn-studio" onclick="switchTab('studio')" class="nav-tab active px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-bold flex items-center gap-1.5 text-slate-400 hover:text-white">
-            <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i> NLP Studio
+      <div class="flex flex-wrap items-center gap-2.5">
+        <nav class="flex flex-wrap bg-purple-50/80 p-1 rounded-xl border border-purple-100 gap-1">
+          <button id="tab-btn-studio" onclick="switchTab('studio')" class="nav-tab active px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="message-square-heart" class="w-3.5 h-3.5"></i> Emotion Studio
           </button>
-          <button id="tab-btn-batch" onclick="switchTab('batch')" class="nav-tab px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-bold flex items-center gap-1.5 text-slate-400 hover:text-white">
-            <i data-lucide="files" class="w-3.5 h-3.5"></i> Batch Automation
+          <button id="tab-btn-research" onclick="switchTab('research')" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> NLP Research Lab
           </button>
-          <button id="tab-btn-benchmarks" onclick="switchTab('benchmarks')" class="nav-tab px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-bold flex items-center gap-1.5 text-slate-400 hover:text-white">
-            <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Benchmarks &amp; Matrix
+          <button id="tab-btn-batch" onclick="switchTab('batch')" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="files" class="w-3.5 h-3.5"></i> Batch Journal
           </button>
         </nav>
 
-        <button onclick="toggleAgentDrawer()" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/50 transition">
+        <button onclick="toggleAgentDrawer()" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-sm transition">
           <i data-lucide="bot" class="w-3.5 h-3.5"></i>
-          EmotiAgent AI
-          <span id="agent-status-dot" class="w-2 h-2 rounded-full bg-amber-300"></span>
+          EmotiCoach AI
+          <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
         </button>
       </div>
     </div>
@@ -119,59 +114,53 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
     <!-- =========================================================
-         TAB 1: LIVE NLP STUDIO
+         TAB 1: EVERYDAY EMOTION STUDIO
          ========================================================= -->
     <section id="tab-studio" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-      <!-- Left 7 cols: Input + Live Results + Arena -->
       <div class="lg:col-span-7 space-y-5">
-
-        <!-- Hero Input Card -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4 relative overflow-hidden" id="predictCard">
+        <div class="soft-panel p-6 rounded-2xl space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 class="text-lg font-bold font-display text-white">Real-Time Affective Classifier</h2>
-              <p class="text-xs text-slate-400">Stopword &amp; negation-preserving pipeline trained on 15,939 conflict-cleaned samples.</p>
+              <h2 class="text-lg font-extrabold text-slate-900">Understand the Feeling Behind Any Text</h2>
+              <p class="text-xs text-slate-500">Type naturally — or tap a mood preset below. Pause &gt;3 seconds and EmotiCoach can help write or explore!</p>
             </div>
-            <div class="flex items-center gap-2">
-              <select id="modelSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-300 outline-none focus:border-indigo-500">
-                <option value="bow_lr">BoW + Logistic Regression (89.84% Winner)</option>
-                <option value="tfidf_lr">TF-IDF + Logistic Regression (84.97%)</option>
-                <option value="bow_nb">BoW + Multinomial NB (74.50%)</option>
-                <option value="tfidf_nb">TF-IDF + Multinomial NB (62.80%)</option>
-              </select>
-            </div>
+            <select id="modelSelect" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-violet-800 outline-none focus:border-violet-600">
+              <option value="bow_lr">BoW + Logistic Regression (89.84% Winner)</option>
+              <option value="tfidf_lr">TF-IDF + Logistic Regression (84.97%)</option>
+              <option value="bow_nb">BoW + Multinomial NB (74.50%)</option>
+              <option value="tfidf_nb">TF-IDF + Multinomial NB (62.80%)</option>
+            </select>
           </div>
 
-          <!-- Quick Demo Sample Chips -->
           <div class="flex flex-wrap gap-1.5">
-            <button type="button" onclick="loadChipSample('joy')" class="px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-[11px] font-semibold text-yellow-200 hover:bg-yellow-500/20">😄 Joy</button>
-            <button type="button" onclick="loadChipSample('sadness')" class="px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-[11px] font-semibold text-blue-200 hover:bg-blue-500/20">😢 Sadness</button>
-            <button type="button" onclick="loadChipSample('anger')" class="px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-[11px] font-semibold text-rose-200 hover:bg-rose-500/20">😠 Anger</button>
-            <button type="button" onclick="loadChipSample('fear')" class="px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-[11px] font-semibold text-purple-200 hover:bg-purple-500/20">😨 Fear</button>
-            <button type="button" onclick="loadChipSample('love')" class="px-2.5 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-[11px] font-semibold text-pink-200 hover:bg-pink-500/20">❤️ Love</button>
-            <button type="button" onclick="loadChipSample('surprise')" class="px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-[11px] font-semibold text-teal-200 hover:bg-teal-500/20">😲 Surprise</button>
-            <button type="button" onclick="loadChipSample('negation')" class="px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/35 text-[11px] font-semibold text-indigo-200 hover:bg-indigo-500/25">🧪 Negation Test</button>
+            <button type="button" onclick="loadChipSample('joy')" class="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800 hover:bg-amber-100">😄 Joy</button>
+            <button type="button" onclick="loadChipSample('sadness')" class="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[11px] font-bold text-blue-800 hover:bg-blue-100">😢 Sadness</button>
+            <button type="button" onclick="loadChipSample('anger')" class="px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-[11px] font-bold text-rose-800 hover:bg-rose-100">😠 Anger</button>
+            <button type="button" onclick="loadChipSample('fear')" class="px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-[11px] font-bold text-purple-800 hover:bg-purple-100">😨 Fear</button>
+            <button type="button" onclick="loadChipSample('love')" class="px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-[11px] font-bold text-pink-800 hover:bg-pink-100">❤️ Love</button>
+            <button type="button" onclick="loadChipSample('surprise')" class="px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-[11px] font-bold text-teal-800 hover:bg-teal-100">😲 Surprise</button>
+            <button type="button" onclick="loadChipSample('negation')" class="px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-[11px] font-bold text-violet-800 hover:bg-violet-100">🧪 Test Negation ("Not Angry")</button>
           </div>
 
           <form id="predictForm" class="space-y-3">
-            <div class="relative">
-              <textarea id="textInput" rows="4" maxlength="3000" placeholder="Enter text, a journal reflection, or a message... (Ctrl+Enter to analyze)" class="w-full bg-slate-950/85 border border-slate-800 rounded-xl p-4 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y"></textarea>
+            <div>
+              <textarea id="textInput" rows="4" maxlength="3000" onfocus="armEmotionHesitation()" placeholder="Type or paste a sentence, message, or journal thought... (Ctrl+Enter to analyze)" class="w-full bg-slate-50/70 border border-slate-300 rounded-xl p-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-violet-600 focus:ring-2 focus:ring-violet-100 resize-y"></textarea>
               <div class="flex items-center justify-between text-[11px] mt-1.5">
-                <span id="inputError" class="text-rose-400 font-medium"></span>
-                <span class="font-mono text-slate-400"><span id="charCount">0</span> / 3000</span>
+                <span id="inputError" class="text-rose-600 font-semibold"></span>
+                <span class="font-mono text-slate-500"><span id="charCount">0</span> / 3000</span>
               </div>
             </div>
 
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-3">
-                <label class="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                  <input type="checkbox" id="compareToggle" checked class="rounded border-slate-700" />
-                  <span>4-Model Arena Comparison</span>
+                <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                  <input type="checkbox" id="compareToggle" checked class="rounded border-slate-400" />
+                  <span>Compare All 4 Models</span>
                 </label>
-                <button type="button" onclick="clearInput()" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 hover:text-white">Clear</button>
+                <button type="button" onclick="clearInput()" class="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-200">Clear</button>
               </div>
-              <button type="submit" id="analyzeBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-950/50 flex items-center gap-2 transition">
+              <button type="submit" id="analyzeBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-sm flex items-center gap-2 transition">
                 <i data-lucide="zap" class="w-3.5 h-3.5"></i>
                 <span id="analyzeBtnLabel">Analyse Emotion</span>
               </button>
@@ -179,237 +168,106 @@
           </form>
         </div>
 
-        <!-- Prediction Result Panel -->
+        <!-- Result Panel -->
         <div id="resultSection" class="hidden space-y-5">
-
-          <!-- Hero Result + Ring + Inline Heatmap -->
-          <div class="glass-panel p-6 rounded-2xl space-y-5">
+          <div class="soft-panel p-6 rounded-2xl space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex items-center gap-4">
-                <div id="resultEmoji" class="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-3xl shadow-inner">🤔</div>
+                <div id="resultEmoji" class="w-16 h-16 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-3xl">🤔</div>
                 <div>
-                  <div class="text-[10px] font-mono uppercase tracking-widest text-slate-400" id="resultModelBadge">BoW + Logistic Regression</div>
-                  <h3 id="resultEmotion" class="text-3xl font-extrabold font-display text-white capitalize">Emotion</h3>
-                  <div id="resultRunnerUp" class="text-xs text-slate-400 mt-0.5">Margin vs runner-up: --%</div>
+                  <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500" id="resultModelBadge">BoW + Logistic Regression</div>
+                  <h3 id="resultEmotion" class="text-3xl font-extrabold text-slate-900 capitalize">Emotion</h3>
+                  <div id="resultRunnerUp" class="text-xs text-slate-500 mt-0.5">Margin vs next closest: --%</div>
                 </div>
               </div>
 
-              <div class="flex items-center gap-3 self-start sm:self-center">
+              <div class="flex items-center gap-3">
                 <div class="relative w-16 h-16 flex items-center justify-center">
                   <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"></circle>
-                    <circle id="confRingFill" class="conf-ring-fill" cx="18" cy="18" r="15.5" fill="none" stroke="#6366f1" stroke-width="3" stroke-dasharray="97.4" stroke-dashoffset="97.4" stroke-linecap="round"></circle>
+                    <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
+                    <circle id="confRingFill" class="conf-ring-fill" cx="18" cy="18" r="15.5" fill="none" stroke="#6d28d9" stroke-width="3" stroke-dasharray="97.4" stroke-dashoffset="97.4" stroke-linecap="round"></circle>
                   </svg>
-                  <span id="confPct" class="absolute text-xs font-mono font-bold text-white">0%</span>
+                  <span id="confPct" class="absolute text-xs font-mono font-bold text-slate-900">0%</span>
                 </div>
-                <button onclick="openAgentWithCurrentText()" class="px-3 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/40 text-indigo-200 text-xs font-bold flex items-center gap-1.5 transition">
-                  <i data-lucide="bot" class="w-3.5 h-3.5"></i> Ask AI Agent
+                <button onclick="askCoachTopic('Explain why the model predicted this emotion and how to reframe it')" class="px-3 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-900 text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="bot" class="w-3.5 h-3.5"></i> Ask AI Coach
                 </button>
               </div>
             </div>
 
-            <!-- Inline XAI Token Heatmap -->
-            <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-mono uppercase tracking-wider text-slate-300">Inline XAI Token Heatmap (Normalized Sequence)</span>
-                <span class="text-[10px] text-slate-400">Green = supports predicted · Rose = pulls away</span>
+            <!-- Sentence Token Heatmap -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[11px] font-bold uppercase text-slate-700">Word-by-Word Influence Map (Stopwords &amp; Negation Preserved)</span>
+                <span class="text-[10px] text-slate-500">Green = drove prediction · Rose = opposed</span>
               </div>
               <div id="sentenceHeatmap" class="flex flex-wrap gap-1.5 pt-1"></div>
             </div>
 
-            <!-- 6-Class Probabilities -->
+            <!-- 6-Emotion Probability Breakdown -->
             <div class="space-y-2">
-              <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">6-Class Probability Breakdown</span>
+              <span class="text-[11px] font-bold uppercase text-slate-500">Confidence Across All 6 Emotions</span>
               <div id="probGrid" class="space-y-2"></div>
             </div>
 
-            <!-- Positive vs Opposing Trigger Tokens -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/70">
-              <div>
-                <span class="text-[11px] font-mono uppercase text-emerald-400 block mb-2">Supporting Trigger Weights</span>
-                <div id="xaiPosChips" class="flex flex-wrap gap-1.5"></div>
-              </div>
-              <div>
-                <span class="text-[11px] font-mono uppercase text-rose-400 block mb-2">Counter / Opposing Weights</span>
-                <div id="xaiNegChips" class="flex flex-wrap gap-1.5"></div>
-              </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+              <div><span class="text-[11px] font-bold uppercase text-emerald-700 block mb-2">Strongest Trigger Words</span><div id="xaiPosChips" class="flex flex-wrap gap-1.5"></div></div>
+              <div><span class="text-[11px] font-bold uppercase text-rose-700 block mb-2">Opposing Words</span><div id="xaiNegChips" class="flex flex-wrap gap-1.5"></div></div>
             </div>
           </div>
 
-          <!-- 4-Model Arena Comparison -->
-          <div id="arenaSection" class="glass-panel p-6 rounded-2xl space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 class="text-sm font-bold font-display text-white">4-Model Consensus Arena</h3>
-                <p class="text-xs text-slate-400">Live comparison across BoW+LR, TF-IDF+LR, BoW+NB, and TF-IDF+NB.</p>
-              </div>
-              <span id="arenaConsensusBadge" class="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Consensus</span>
+          <div id="arenaSection" class="soft-panel p-5 rounded-2xl space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-slate-900">4-Model Consensus Arena</h3>
+              <span id="arenaConsensusBadge" class="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">Consensus</span>
             </div>
             <div id="arenaGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
           </div>
         </div>
       </div>
 
-      <!-- Right 5 cols: KPIs + Mood Pulse + History -->
+      <!-- Right 5 cols -->
       <div class="lg:col-span-5 space-y-5">
         <div class="grid grid-cols-3 gap-3">
-          <div class="glass-panel p-4 rounded-2xl text-center">
-            <div class="text-xl font-extrabold font-display text-white">15,939</div>
-            <div class="text-[10px] font-mono text-slate-400 uppercase mt-0.5">Clean Texts</div>
-          </div>
-          <div class="glass-panel p-4 rounded-2xl text-center">
-            <div class="text-xl font-extrabold font-display text-emerald-300">89.84%</div>
-            <div class="text-[10px] font-mono text-slate-400 uppercase mt-0.5">BoW+LR Test</div>
-          </div>
-          <div class="glass-panel p-4 rounded-2xl text-center">
-            <div class="text-xl font-extrabold font-display text-indigo-300">87.95%</div>
-            <div class="text-[10px] font-mono text-slate-400 uppercase mt-0.5">5-Fold CV</div>
-          </div>
+          <div class="soft-panel p-4 rounded-2xl text-center"><div class="text-xl font-extrabold text-slate-900">15,939</div><div class="text-[10px] font-mono text-slate-500 uppercase">Clean Texts</div></div>
+          <div class="soft-panel p-4 rounded-2xl text-center"><div class="text-xl font-extrabold text-emerald-700">89.84%</div><div class="text-[10px] font-mono text-slate-500 uppercase">BoW+LR Test</div></div>
+          <div class="soft-panel p-4 rounded-2xl text-center"><div class="text-xl font-extrabold text-violet-700">87.95%</div><div class="text-[10px] font-mono text-slate-500 uppercase">5-Fold CV</div></div>
         </div>
 
-        <!-- Session Emotional Distribution Chart -->
-        <div class="glass-panel p-5 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold font-display text-white">Session Mood Telemetry</h3>
-            <span id="sessionCountBadge" class="text-[11px] font-mono text-slate-400">0 samples</span>
-          </div>
+        <div class="soft-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="text-sm font-extrabold text-slate-900">Your Session Mood Mix</h3><span id="sessionCountBadge" class="text-[11px] font-mono text-slate-500">0 entries</span></div>
           <div class="h-44"><canvas id="sessionChart"></canvas></div>
         </div>
 
-        <!-- Recent History -->
-        <div class="glass-panel p-5 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold font-display text-white">Recent Analyses</h3>
-            <button onclick="clearHistory()" class="text-[11px] text-slate-400 hover:text-rose-300 font-semibold">Clear</button>
-          </div>
+        <div class="soft-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between"><h3 class="text-sm font-extrabold text-slate-900">Recent Analyses</h3><button onclick="clearHistory()" class="text-[11px] font-semibold text-slate-500 hover:text-rose-600">Clear</button></div>
           <ul id="historyList" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-            <li class="text-xs text-slate-500 text-center py-6">No analyses yet. Submit a sentence on the left!</li>
+            <li class="text-xs text-slate-400 text-center py-6">Run your first sentence on the left!</li>
           </ul>
         </div>
       </div>
     </section>
 
     <!-- =========================================================
-         TAB 2: BATCH JOURNAL & CSV AUTOMATION
+         TAB 2: DATA SCIENTIST NLP RESEARCH LAB
          ========================================================= -->
-    <section id="tab-batch" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl space-y-5">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-bold font-display text-white flex items-center gap-2">
-              <i data-lucide="files" class="w-5 h-5 text-pink-400"></i>
-              Batch Journal &amp; Feedback Automation
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">Classify up to 2,000 journal lines or CSV rows simultaneously with BoW+LR &amp; TF-IDF+LR consensus + trigger lexicon discovery.</p>
-          </div>
-          <button onclick="runDemoBatch()" class="px-4 py-2 rounded-xl bg-indigo-600/25 border border-indigo-500/40 hover:bg-indigo-600/40 text-xs font-bold text-indigo-200 flex items-center gap-1.5">
-            <i data-lucide="play" class="w-3.5 h-3.5"></i> Run 10-Entry Demo Journal
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <label class="glass-card rounded-2xl p-6 border-dashed border-2 border-slate-700 hover:border-pink-500/60 cursor-pointer flex flex-col items-center justify-center text-center gap-2">
-            <i data-lucide="upload-cloud" class="w-8 h-8 text-pink-400"></i>
-            <span class="text-sm font-bold text-white">Upload .TXT or .CSV File</span>
-            <span class="text-xs text-slate-400">.txt (one sentence per line) or .csv (text / sentence / message column)</span>
-            <input type="file" accept=".txt,.csv" class="hidden" onchange="handleBatchFile(this.files[0])" />
-          </label>
-          <div class="glass-card rounded-2xl p-4 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Or Paste Multi-Line Text</span>
-              <button onclick="runPastedBatch()" class="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold">Classify All</button>
-            </div>
-            <textarea id="batchTextArea" rows="5" placeholder="Paste one entry per line...&#10;I am thrilled we finally shipped this!&#10;I do not feel calm about tomorrow's presentation." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white font-mono outline-none focus:border-pink-500"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div id="batchResultsPanel" class="hidden space-y-5">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="glass-panel p-4 rounded-xl">
-            <span class="text-[10px] font-mono uppercase text-slate-400">Entries Analyzed</span>
-            <div id="batchTotal" class="text-2xl font-extrabold font-display text-white mt-1">0</div>
-          </div>
-          <div class="glass-panel p-4 rounded-xl">
-            <span class="text-[10px] font-mono uppercase text-slate-400">Dominant Emotion</span>
-            <div id="batchDominant" class="text-2xl font-extrabold font-display text-pink-300 mt-1 capitalize">--</div>
-          </div>
-          <div class="glass-panel p-4 rounded-xl">
-            <span class="text-[10px] font-mono uppercase text-slate-400">BoW vs TF-IDF Agree</span>
-            <div id="batchAgree" class="text-2xl font-extrabold font-display text-emerald-300 mt-1">0%</div>
-          </div>
-          <div class="glass-panel p-4 rounded-xl">
-            <span class="text-[10px] font-mono uppercase text-slate-400">Export CSV</span>
-            <button onclick="downloadBatchCsv()" class="mt-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Download CSV</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div class="glass-panel p-5 rounded-2xl">
-            <h3 class="text-sm font-bold font-display text-white mb-3">Batch Mood Distribution</h3>
-            <div class="h-56"><canvas id="batchChart"></canvas></div>
-            <div class="mt-4">
-              <span class="text-[10px] font-mono uppercase text-slate-400 block mb-2">Top Recurring Triggers</span>
-              <div id="batchTriggerCloud" class="flex flex-wrap gap-1.5"></div>
-            </div>
-          </div>
-          <div class="glass-panel p-5 rounded-2xl lg:col-span-2 overflow-hidden">
-            <h3 class="text-sm font-bold font-display text-white mb-3">Classified Entries</h3>
-            <div class="overflow-x-auto max-h-96 rounded-xl border border-slate-800/80">
-              <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-950/90 text-slate-400 sticky top-0">
-                  <tr>
-                    <th class="p-2.5">#</th>
-                    <th class="p-2.5">Text</th>
-                    <th class="p-2.5">BoW+LR</th>
-                    <th class="p-2.5">TF-IDF+LR</th>
-                    <th class="p-2.5">Trigger</th>
-                  </tr>
-                </thead>
-                <tbody id="batchTableBody" class="divide-y divide-slate-800/60"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =========================================================
-         TAB 3: BENCHMARKS & 6x6 CONFUSION MATRIX
-         ========================================================= -->
-    <section id="tab-benchmarks" class="hidden space-y-6">
+    <section id="tab-research" class="hidden space-y-6">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="glass-panel p-5 rounded-2xl">
-          <span class="text-[10px] font-mono uppercase text-slate-400">CV &amp; Test Winner</span>
-          <div class="text-lg font-extrabold font-display text-emerald-300 mt-1">BoW + LogReg</div>
-          <div class="text-xs text-slate-400 mt-1">87.95% CV · 89.84% Test</div>
-        </div>
-        <div class="glass-panel p-5 rounded-2xl">
-          <span class="text-[10px] font-mono uppercase text-slate-400">Macro F1 (Winner)</span>
-          <div class="text-lg font-extrabold font-display text-indigo-300 mt-1">0.8591</div>
-          <div class="text-xs text-slate-400 mt-1">3,188 stratified test rows</div>
-        </div>
-        <div class="glass-panel p-5 rounded-2xl">
-          <span class="text-[10px] font-mono uppercase text-slate-400">Dataset Deduplication</span>
-          <div id="benchDatasetAudit" class="text-lg font-extrabold font-display text-amber-300 mt-1">16,000 &rarr; 15,939</div>
-          <div class="text-xs text-slate-400 mt-1">60 conflicts + 1 dup removed</div>
-        </div>
-        <div class="glass-panel p-5 rounded-2xl">
-          <span class="text-[10px] font-mono uppercase text-slate-400">Negation Handling</span>
-          <div class="text-lg font-extrabold font-display text-white mt-1">Stopwords Kept</div>
-          <div class="text-xs text-slate-400 mt-1">Retains 'not', 'never', 'no'</div>
-        </div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">CV &amp; Test Winner</span><div class="text-lg font-extrabold text-emerald-700 mt-1">BoW + LogReg</div><div class="text-xs text-slate-500">87.95% CV · 89.84% Test</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Macro F1 (Winner)</span><div class="text-lg font-extrabold text-violet-700 mt-1">0.8591</div><div class="text-xs text-slate-500">Balanced across 6 classes</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Conflict Cleanup</span><div class="text-lg font-extrabold text-amber-700 mt-1">16,000 &rarr; 15,939</div><div class="text-xs text-slate-500">60 label conflicts + 1 dup dropped</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Vocabulary Size</span><div class="text-lg font-extrabold text-slate-900 mt-1">13,527 Tokens</div><div class="text-xs text-slate-500">Stopwords &amp; negation kept</div></div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="glass-panel p-5 rounded-2xl">
-          <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">5-Fold CV vs Held-Out Test &amp; Macro F1</h3>
-          <div class="h-72"><canvas id="benchModelsChart"></canvas></div>
+        <div class="soft-panel p-5 rounded-2xl">
+          <h3 class="text-sm font-extrabold text-slate-900 mb-3">5-Fold CV Accuracy Stability Across Models</h3>
+          <div class="h-64"><canvas id="benchFoldsChart"></canvas></div>
         </div>
-        <div class="glass-panel p-5 rounded-2xl space-y-3">
+        <div class="soft-panel p-5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">6&times;6 Confusion Matrix</h3>
-            <select id="cmModelSelect" onchange="renderMatrixAndReport()" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-indigo-300 outline-none">
+            <h3 class="text-sm font-extrabold text-slate-900">6&times;6 Held-Out Confusion Matrix</h3>
+            <select id="cmModelSelect" onchange="renderMatrixAndReport()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-violet-800">
               <option value="bow_lr">BoW + Logistic Regression (89.84%)</option>
               <option value="tfidf_lr">TF-IDF + Logistic Regression (84.97%)</option>
               <option value="bow_nb">BoW + Multinomial NB (74.50%)</option>
@@ -420,80 +278,135 @@
         </div>
       </div>
 
-      <div class="glass-panel p-5 rounded-2xl">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">Per-Emotion Precision, Recall &amp; F1-Score</h3>
+      <!-- Data Scientist Learned Vocabulary Explorer -->
+      <div class="soft-panel p-6 rounded-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Learned Classifier Weight Explorer (Top Predictive Tokens)</h3>
+            <p class="text-xs text-slate-500">Inspect the strongest positive &amp; opposing coefficients learned by the classifier for any emotion.</p>
+          </div>
+          <div class="flex gap-2">
+            <select id="vocabModelSelect" onchange="renderVocabExplorer()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold">
+              <option value="bow_lr">BoW + Logistic Regression</option>
+              <option value="tfidf_lr">TF-IDF + Logistic Regression</option>
+            </select>
+            <select id="vocabEmotionSelect" onchange="renderVocabExplorer()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold capitalize">
+              <option value="joy">😄 Joy</option>
+              <option value="sadness">😢 Sadness</option>
+              <option value="anger">😠 Anger</option>
+              <option value="fear">😨 Fear</option>
+              <option value="love">❤️ Love</option>
+              <option value="surprise">😲 Surprise</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-emerald-700 mb-2">Top Positive Coefficients (Pull Toward Class)</div><div id="vocabPosList" class="flex flex-wrap gap-1.5"></div></div>
+          <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-rose-700 mb-2">Top Negative Coefficients (Pull Away From Class)</div><div id="vocabNegList" class="flex flex-wrap gap-1.5"></div></div>
+        </div>
+      </div>
+
+      <div class="soft-panel p-5 rounded-2xl">
+        <h3 class="text-sm font-extrabold text-slate-900 mb-3">Per-Emotion Precision, Recall &amp; F1-Score</h3>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
-            <thead class="bg-slate-950/80 text-slate-400 border-b border-slate-800">
-              <tr>
-                <th class="p-3">Emotion</th>
-                <th class="p-3">Precision</th>
-                <th class="p-3">Recall</th>
-                <th class="p-3">F1-Score</th>
-                <th class="p-3">Test Support</th>
-              </tr>
-            </thead>
-            <tbody id="perClassTbody" class="divide-y divide-slate-800/60"></tbody>
+            <thead class="bg-purple-50 text-slate-600 border-b border-purple-100"><tr><th class="p-3">Emotion</th><th class="p-3">Precision</th><th class="p-3">Recall</th><th class="p-3">F1-Score</th><th class="p-3">Test Support</th></tr></thead>
+            <tbody id="perClassTbody" class="divide-y divide-slate-200"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <footer class="pt-6 pb-8 border-t border-slate-800/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-      <div>EmotiSense AI v2.0 · Affective NLP &amp; Explainable Intelligence · Syed Tahir Ahamed R</div>
-      <div class="font-mono text-[11px] text-slate-400">sklearn 1.8.0 · BoW+LR (89.84% Test) + TF-IDF+LR (84.97% Test)</div>
+    <!-- =========================================================
+         TAB 3: BATCH JOURNAL AUTOMATION
+         ========================================================= -->
+    <section id="tab-batch" class="hidden space-y-6">
+      <div class="soft-panel p-6 rounded-2xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold text-slate-900">Batch Journal &amp; Feedback Automation</h2>
+            <p class="text-xs text-slate-500">Classify up to 2,000 lines or CSV entries in one pass and export structured mood telemetry.</p>
+          </div>
+          <button onclick="runDemoBatch()" class="px-4 py-2 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold">Run 10-Entry Demo Journal</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <label class="soft-card rounded-2xl p-6 border-dashed border-2 border-purple-200 hover:border-violet-600 cursor-pointer flex flex-col items-center justify-center text-center gap-2">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-violet-700"></i>
+            <span class="text-sm font-bold text-slate-900">Upload .TXT or .CSV File</span>
+            <span class="text-xs text-slate-500">.txt (one entry per line) or .csv (text / sentence column)</span>
+            <input type="file" accept=".txt,.csv" class="hidden" onchange="handleBatchFile(this.files[0])" />
+          </label>
+          <div class="soft-card rounded-2xl p-4 flex flex-col gap-2">
+            <div class="flex items-center justify-between"><span class="text-xs font-bold text-slate-700 uppercase">Or Paste Multi-Line Text</span><button onclick="runPastedBatch()" class="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold">Classify All</button></div>
+            <textarea id="batchTextArea" rows="4" placeholder="Paste one line per entry...&#10;I feel thrilled we finished this!&#10;I am worried about tomorrow's exam." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-slate-800 outline-none focus:border-violet-600"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="batchResultsPanel" class="hidden space-y-5">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Entries</span><div id="batchTotal" class="text-2xl font-extrabold text-slate-900">0</div></div>
+          <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Dominant Mood</span><div id="batchDominant" class="text-2xl font-extrabold text-pink-600 capitalize">--</div></div>
+          <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">BoW vs TF-IDF Agree</span><div id="batchAgree" class="text-2xl font-extrabold text-emerald-700">0%</div></div>
+          <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Export</span><button onclick="downloadBatchCsv()" class="mt-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Download CSV</button></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="soft-panel p-5 rounded-2xl">
+            <h3 class="text-sm font-extrabold text-slate-900 mb-3">Emotion Distribution</h3>
+            <div class="h-52"><canvas id="batchChart"></canvas></div>
+            <div class="mt-4"><span class="text-[10px] font-mono uppercase text-slate-500 block mb-2">Top Recurring Triggers</span><div id="batchTriggerCloud" class="flex flex-wrap gap-1.5"></div></div>
+          </div>
+          <div class="soft-panel p-5 rounded-2xl lg:col-span-2 overflow-hidden">
+            <h3 class="text-sm font-extrabold text-slate-900 mb-3">Classified Entries</h3>
+            <div class="overflow-x-auto max-h-96 rounded-xl border border-slate-200">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-purple-50 text-slate-600 sticky top-0"><tr><th class="p-2.5">#</th><th class="p-2.5">Text</th><th class="p-2.5">BoW+LR</th><th class="p-2.5">TF-IDF+LR</th><th class="p-2.5">Trigger</th></tr></thead>
+                <tbody id="batchTableBody" class="divide-y divide-slate-200"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="pt-6 pb-8 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <div>EmotiSense AI · Lavender Editorial Edition · Syed Tahir Ahamed R</div>
+      <div class="font-mono text-[11px]">sklearn 1.8.0 · BoW+LR (89.84% Test) + TF-IDF+LR (84.97% Test)</div>
     </footer>
   </main>
 
-  <!-- Floating AI Agent Button -->
-  <button onclick="toggleAgentDrawer()" class="fixed bottom-5 right-5 z-40 px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-bold shadow-2xl shadow-indigo-950/80 flex items-center gap-2 transition transform hover:scale-105">
+  <!-- Floating EmotiCoach Trigger -->
+  <button onclick="toggleAgentDrawer()" class="fixed bottom-5 right-5 z-40 px-4 py-3 rounded-full bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-xl flex items-center gap-2 transition transform hover:scale-105">
     <i data-lucide="bot" class="w-4 h-4"></i>
-    <span>EmotiAgent AI</span>
+    <span>EmotiCoach AI</span>
   </button>
 
-  <!-- 1-on-1 Interactive EmotiAgent AI Slide-Over Drawer -->
-  <aside id="agent-drawer" class="agent-drawer closed fixed top-0 right-0 h-full w-full sm:w-[430px] z-50 glass-panel border-l border-indigo-500/30 flex flex-col">
-    <div class="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/75">
+  <!-- Proactive Pop-Out 1-on-1 EmotiCoach Concierge -->
+  <aside id="agent-drawer" class="agent-drawer closed fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[410px] h-[530px] max-h-[78vh] z-50 soft-panel rounded-2xl border border-purple-200 flex flex-col overflow-hidden shadow-2xl">
+    <div class="p-3.5 bg-gradient-to-r from-violet-700 to-pink-600 text-white flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white">
-          <i data-lucide="bot" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <h3 class="text-sm font-bold font-display text-white">EmotiAgent AI (1-on-1)</h3>
-          <p class="text-[11px] text-slate-400">Powered by Gemini / OpenAI · Synced to NLP</p>
-        </div>
+        <div class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center"><i data-lucide="bot" class="w-4 h-4 text-white"></i></div>
+        <div><h3 class="text-sm font-bold leading-tight">EmotiCoach AI</h3><p class="text-[10px] text-purple-100">Active Guide · Explains Tone &amp; NLP</p></div>
       </div>
-      <div class="flex items-center gap-1.5">
-        <button onclick="openAgentSettings()" title="API Key & Provider Settings" class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"><i data-lucide="key-round" class="w-3.5 h-3.5"></i></button>
-        <button onclick="clearAgentChat()" title="Clear Chat" class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-        <button onclick="toggleAgentDrawer()" title="Close" class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <div class="flex items-center gap-1">
+        <button onclick="openAgentSettings()" title="LLM Key Settings" class="p-1.5 rounded-lg hover:bg-white/15"><i data-lucide="key-round" class="w-3.5 h-3.5"></i></button>
+        <button onclick="resetAgentGreeting()" title="Restart Guide" class="p-1.5 rounded-lg hover:bg-white/15"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+        <button onclick="toggleAgentDrawer()" title="Minimize" class="p-1.5 rounded-lg hover:bg-white/15"><i data-lucide="minus" class="w-4 h-4"></i></button>
       </div>
     </div>
 
-    <div id="agent-context-pill" class="px-4 py-2 bg-indigo-950/40 border-b border-indigo-500/20 text-[11px] font-mono text-indigo-200 flex items-center justify-between">
-      <span>Live NLP Context: Awaiting Text</span>
-      <span id="agent-key-badge" class="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-amber-300">Checking Key...</span>
+    <div id="agent-context-pill" class="px-3.5 py-1.5 bg-purple-50 border-b border-purple-100 text-[11px] font-mono text-violet-900 flex items-center justify-between">
+      <span>Live Sync: Ready for text</span>
+      <span id="agent-key-badge" class="text-[10px] px-2 py-0.5 rounded bg-white border border-purple-200 text-violet-800">Guided Ready</span>
     </div>
 
-    <div id="agent-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
-      <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-200 leading-relaxed">
-        <p class="font-bold text-pink-300 mb-1">Welcome to EmotiAgent AI</p>
-        <p>I inspect your live emotion predictions, token trigger weights, and 4-model consensus in real time. Ask me why a sentence triggered an emotion, how to reframe your tone constructively, or reflect on your session mood!</p>
-      </div>
-    </div>
+    <div id="agent-messages" class="flex-1 overflow-y-auto p-3.5 space-y-2.5 text-xs bg-purple-50/25"></div>
 
-    <div class="px-4 py-2 border-t border-slate-800/70 flex gap-1.5 overflow-x-auto">
-      <button onclick="sendQuickPrompt('Explain why the model predicted this emotion and which trigger words drove it.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 hover:border-pink-500 text-[11px] text-slate-200">Explain Prediction</button>
-      <button onclick="sendQuickPrompt('Help me rewrite my message in a calmer, more constructive tone while keeping my honest meaning.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 hover:border-pink-500 text-[11px] text-slate-200">Reframe Tone</button>
-      <button onclick="sendQuickPrompt('Compare why BoW+LR and TF-IDF+LR agreed or disagreed on this text.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 hover:border-pink-500 text-[11px] text-slate-200">BoW vs TF-IDF</button>
-      <button onclick="sendQuickPrompt('Give me a thoughtful reflection prompt based on my current emotion and session history.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 hover:border-pink-500 text-[11px] text-slate-200">Reflection Prompt</button>
-    </div>
-
-    <form onsubmit="submitAgentChat(event)" class="p-3 border-t border-slate-800 bg-slate-950/80 flex items-center gap-2">
-      <input type="text" id="agent-input" placeholder="Ask EmotiAgent about tone, NLP weights, or reframing..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-pink-500" />
-      <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold">
-        <i data-lucide="send" class="w-3.5 h-3.5"></i>
-      </button>
+    <form onsubmit="submitAgentChat(event)" class="p-2.5 border-t border-purple-100 bg-white flex items-center gap-2">
+      <input type="text" id="agent-input" placeholder="Ask about tone, BoW vs TF-IDF, or reframing..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-violet-600" />
+      <button type="submit" class="px-3.5 py-2 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
     </form>
   </aside>
 

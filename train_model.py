@@ -1,14 +1,8 @@
 """
 train_model.py
 --------------
-Reproducible training & 5-fold CV benchmarking script for EmotiSense AI.
-Aligned strictly with Emotion_Heart_Validation.ipynb (scikit-learn 1.8.0):
-  - Normalizes text while retaining stopwords & negation
-  - Drops empty rows, removes conflicting-label texts (60 rows), and deduplicates (1 row) -> 15,939 rows
-  - Uses string emotion classes directly (eliminating any LabelEncoder/LABEL_MAP mismatch)
-  - 80/20 stratified split (SEED=42) + 5-fold StratifiedKFold CV
-  - Benchmarks BoW+LR, TF-IDF+LR, BoW+MNB, TF-IDF+MNB
-  - Saves sklearn 1.8.0 artifacts (promoting BoW+LR as primary CV & held-out winner) and emotion_metrics.json
+Reproducible training, 5-fold CV benchmarking, and NLP lexical research export
+for EmotiSense AI (scikit-learn 1.8.0), aligned with Emotion_Heart_Validation.ipynb.
 """
 
 import json
@@ -44,10 +38,25 @@ DATA_FILE = (
 )
 
 
+def extract_top_tokens(pipe, labels_sorted, top_n=12):
+    vec = pipe.named_steps["vectorizer"]
+    clf = pipe.named_steps["model"]
+    vocab = np.array(vec.get_feature_names_out())
+    result = {}
+    if hasattr(clf, "coef_"):
+        for idx, lbl in enumerate(clf.classes_):
+            coefs = clf.coef_[idx]
+            pos_idx = np.argsort(coefs)[::-1][:top_n]
+            neg_idx = np.argsort(coefs)[:top_n]
+            result[str(lbl)] = {
+                "positive": [{"word": str(vocab[i]), "weight": round(float(coefs[i]), 3)} for i in pos_idx],
+                "negative": [{"word": str(vocab[i]), "weight": round(float(coefs[i]), 3)} for i in neg_idx],
+            }
+    return result
+
+
 def main():
     print(f"scikit-learn version: {sklearn.__version__}")
-    print(f"Loading dataset from: {DATA_FILE}")
-
     raw = pd.read_csv(DATA_FILE, sep=";", header=None, names=["text", "emotion"])
     raw_rows = len(raw)
 
@@ -55,7 +64,6 @@ def main():
     df["text"] = df["text"].map(preprocess)
     df = df[df["text"].str.len() > 0].copy()
 
-    # Remove conflicting-label normalized texts, then same-label duplicates
     conflict_counts = df.groupby("text")["emotion"].nunique()
     conflict_texts = conflict_counts[conflict_counts > 1].index
     n_conflict = int(df["text"].isin(conflict_texts).sum())
@@ -64,11 +72,6 @@ def main():
     n_dup = int(df.duplicated(subset="text").sum())
     df = df.drop_duplicates(subset="text").copy()
     retained_rows = len(df)
-
-    print(
-        f"EMOTION raw={raw_rows}, conflicting_removed={n_conflict}, "
-        f"same_label_duplicates_removed={n_dup}, retained={retained_rows}"
-    )
 
     class_dist = df["emotion"].value_counts().to_dict()
     labels_sorted = sorted(df["emotion"].unique().tolist())
@@ -128,6 +131,7 @@ def main():
                 "model": display_name,
                 "cv_accuracy": round(float(cv_scores["test_accuracy"].mean()), 6),
                 "cv_sd": round(float(cv_scores["test_accuracy"].std()), 6),
+                "cv_fold_accuracies": [round(float(v), 4) for v in cv_scores["test_accuracy"]],
                 "cv_macro_f1": round(float(cv_scores["test_macro_f1"].mean()), 6),
                 "test_accuracy": round(test_acc, 6),
                 "macro_f1": round(macro_f1, 6),
@@ -139,27 +143,17 @@ def main():
             }
         )
 
-        print(
-            f"{display_name:30s} | CV Acc: {cv_scores['test_accuracy'].mean():.4f} "
-            f"(+/-{cv_scores['test_accuracy'].std():.4f}) | Test Acc: {test_acc:.4f} | Macro F1: {macro_f1:.4f}"
-        )
-
     benchmarks.sort(key=lambda r: r["cv_accuracy"], reverse=True)
     winner = benchmarks[0]["key"]
-    print(f"Selected CV Winner: {benchmarks[0]['model']} ({winner})")
 
-    # Save vectorizer + model artifacts cleanly inside emotion-classifier/
-    # Primary winner: BoW + Logistic Regression
     bow_lr = fitted["bow_lr"]
     joblib.dump(bow_lr.named_steps["model"], os.path.join(APP_DIR, "bow_model.pkl"))
     joblib.dump(bow_lr.named_steps["vectorizer"], os.path.join(APP_DIR, "bow_vectorizer.pkl"))
 
-    # Secondary comparison: TF-IDF + Logistic Regression
     tfidf_lr = fitted["tfidf_lr"]
     joblib.dump(tfidf_lr.named_steps["model"], os.path.join(APP_DIR, "model.pkl"))
     joblib.dump(tfidf_lr.named_steps["vectorizer"], os.path.join(APP_DIR, "vectorizer.pkl"))
 
-    # Baseline NB classifiers (sharing the same fitted vectorizers!)
     bow_nb = fitted["bow_nb"]
     tfidf_nb = fitted["tfidf_nb"]
     joblib.dump(bow_nb.named_steps["model"], os.path.join(APP_DIR, "nb_bow_model.pkl"))
@@ -183,12 +177,16 @@ def main():
         "labels": labels_sorted,
         "selected_primary_key": winner,
         "benchmarks": benchmarks,
+        "top_tokens": {
+            "bow_lr": extract_top_tokens(bow_lr, labels_sorted, top_n=12),
+            "tfidf_lr": extract_top_tokens(tfidf_lr, labels_sorted, top_n=12),
+        },
     }
 
     with open(os.path.join(APP_DIR, "emotion_metrics.json"), "w", encoding="utf-8") as f:
         json.dump(metrics_payload, f, indent=2)
 
-    print("Saved all sklearn 1.8.0 emotion models and emotion_metrics.json successfully.")
+    print("EmotiSense v2.1 research metrics saved successfully.")
 
 
 if __name__ == "__main__":

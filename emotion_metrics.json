@@ -33,6 +33,13 @@
       "model": "BoW + Logistic Regression",
       "cv_accuracy": 0.879461,
       "cv_sd": 0.00717,
+      "cv_fold_accuracies": [
+        0.8679,
+        0.8902,
+        0.8816,
+        0.8776,
+        0.88
+      ],
       "cv_macro_f1": 0.84141,
       "test_accuracy": 0.898369,
       "macro_f1": 0.859078,
@@ -133,6 +140,13 @@
       "model": "TF-IDF + Logistic Regression",
       "cv_accuracy": 0.829661,
       "cv_sd": 0.007604,
+      "cv_fold_accuracies": [
+        0.8197,
+        0.8298,
+        0.8431,
+        0.8271,
+        0.8286
+      ],
       "cv_macro_f1": 0.753455,
       "test_accuracy": 0.849749,
       "macro_f1": 0.776846,
@@ -233,6 +247,13 @@
       "model": "BoW + Multinomial NB",
       "cv_accuracy": 0.726532,
       "cv_sd": 0.00809,
+      "cv_fold_accuracies": [
+        0.7174,
+        0.7271,
+        0.7392,
+        0.7306,
+        0.7184
+      ],
       "cv_macro_f1": 0.530301,
       "test_accuracy": 0.744981,
       "macro_f1": 0.559119,
@@ -333,6 +354,13 @@
       "model": "TF-IDF + Multinomial NB",
       "cv_accuracy": 0.619952,
       "cv_sd": 0.003409,
+      "cv_fold_accuracies": [
+        0.6154,
+        0.622,
+        0.62,
+        0.6251,
+        0.6173
+      ],
       "cv_macro_f1": 0.321791,
       "test_accuracy": 0.62798,
       "macro_f1": 0.332758,
@@ -428,5 +456,1235 @@
         ]
       ]
     }
-  ]
+  ],
+  "top_tokens": {
+    "bow_lr": {
+      "anger": {
+        "positive": [
+          {
+            "word": "greedy",
+            "weight": 3.526
+          },
+          {
+            "word": "dissatisfied",
+            "weight": 3.449
+          },
+          {
+            "word": "resentful",
+            "weight": 3.432
+          },
+          {
+            "word": "insulted",
+            "weight": 3.408
+          },
+          {
+            "word": "dangerous",
+            "weight": 3.381
+          },
+          {
+            "word": "offended",
+            "weight": 3.353
+          },
+          {
+            "word": "irritable",
+            "weight": 3.345
+          },
+          {
+            "word": "rude",
+            "weight": 3.321
+          },
+          {
+            "word": "distracted",
+            "weight": 3.321
+          },
+          {
+            "word": "petty",
+            "weight": 3.317
+          },
+          {
+            "word": "fucked",
+            "weight": 3.299
+          },
+          {
+            "word": "rebellious",
+            "weight": 3.293
+          }
+        ],
+        "negative": [
+          {
+            "word": "weird",
+            "weight": -1.288
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -1.179
+          },
+          {
+            "word": "strange",
+            "weight": -1.061
+          },
+          {
+            "word": "handle",
+            "weight": -1.041
+          },
+          {
+            "word": "helpless",
+            "weight": -1.037
+          },
+          {
+            "word": "passionate",
+            "weight": -1.008
+          },
+          {
+            "word": "beloved",
+            "weight": -0.996
+          },
+          {
+            "word": "accepted",
+            "weight": -0.987
+          },
+          {
+            "word": "ungrateful",
+            "weight": -0.954
+          },
+          {
+            "word": "surprised",
+            "weight": -0.926
+          },
+          {
+            "word": "sexual",
+            "weight": -0.908
+          },
+          {
+            "word": "curious",
+            "weight": -0.902
+          }
+        ]
+      },
+      "fear": {
+        "positive": [
+          {
+            "word": "pressured",
+            "weight": 3.915
+          },
+          {
+            "word": "shaken",
+            "weight": 3.779
+          },
+          {
+            "word": "terrified",
+            "weight": 3.753
+          },
+          {
+            "word": "vulnerable",
+            "weight": 3.634
+          },
+          {
+            "word": "uncertain",
+            "weight": 3.56
+          },
+          {
+            "word": "reluctant",
+            "weight": 3.496
+          },
+          {
+            "word": "shaky",
+            "weight": 3.412
+          },
+          {
+            "word": "apprehensive",
+            "weight": 3.378
+          },
+          {
+            "word": "paranoid",
+            "weight": 3.365
+          },
+          {
+            "word": "threatened",
+            "weight": 3.359
+          },
+          {
+            "word": "intimidated",
+            "weight": 3.341
+          },
+          {
+            "word": "fearful",
+            "weight": 3.278
+          }
+        ],
+        "negative": [
+          {
+            "word": "stressed",
+            "weight": -1.151
+          },
+          {
+            "word": "passionate",
+            "weight": -1.105
+          },
+          {
+            "word": "dazed",
+            "weight": -1.101
+          },
+          {
+            "word": "peace",
+            "weight": -0.952
+          },
+          {
+            "word": "relaxed",
+            "weight": -0.952
+          },
+          {
+            "word": "glad",
+            "weight": -0.941
+          },
+          {
+            "word": "troubled",
+            "weight": -0.908
+          },
+          {
+            "word": "sweet",
+            "weight": -0.876
+          },
+          {
+            "word": "beloved",
+            "weight": -0.858
+          },
+          {
+            "word": "generous",
+            "weight": -0.834
+          },
+          {
+            "word": "depressed",
+            "weight": -0.818
+          },
+          {
+            "word": "curious",
+            "weight": -0.803
+          }
+        ]
+      },
+      "joy": {
+        "positive": [
+          {
+            "word": "innocent",
+            "weight": 2.79
+          },
+          {
+            "word": "superior",
+            "weight": 2.587
+          },
+          {
+            "word": "satisfied",
+            "weight": 2.581
+          },
+          {
+            "word": "sincere",
+            "weight": 2.544
+          },
+          {
+            "word": "resolved",
+            "weight": 2.53
+          },
+          {
+            "word": "respected",
+            "weight": 2.504
+          },
+          {
+            "word": "pleasant",
+            "weight": 2.499
+          },
+          {
+            "word": "divine",
+            "weight": 2.498
+          },
+          {
+            "word": "valued",
+            "weight": 2.498
+          },
+          {
+            "word": "relaxed",
+            "weight": 2.328
+          },
+          {
+            "word": "invigorated",
+            "weight": 2.322
+          },
+          {
+            "word": "eager",
+            "weight": 2.312
+          }
+        ],
+        "negative": [
+          {
+            "word": "agitated",
+            "weight": -2.109
+          },
+          {
+            "word": "strange",
+            "weight": -2.098
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -1.962
+          },
+          {
+            "word": "hated",
+            "weight": -1.791
+          },
+          {
+            "word": "weird",
+            "weight": -1.731
+          },
+          {
+            "word": "tortured",
+            "weight": -1.695
+          },
+          {
+            "word": "pressured",
+            "weight": -1.644
+          },
+          {
+            "word": "caring",
+            "weight": -1.639
+          },
+          {
+            "word": "jealous",
+            "weight": -1.626
+          },
+          {
+            "word": "frustrated",
+            "weight": -1.571
+          },
+          {
+            "word": "impressed",
+            "weight": -1.569
+          },
+          {
+            "word": "groggy",
+            "weight": -1.536
+          }
+        ]
+      },
+      "love": {
+        "positive": [
+          {
+            "word": "nostalgic",
+            "weight": 4.056
+          },
+          {
+            "word": "sympathetic",
+            "weight": 3.969
+          },
+          {
+            "word": "naughty",
+            "weight": 3.884
+          },
+          {
+            "word": "horny",
+            "weight": 3.804
+          },
+          {
+            "word": "longing",
+            "weight": 3.692
+          },
+          {
+            "word": "fond",
+            "weight": 3.64
+          },
+          {
+            "word": "caring",
+            "weight": 3.61
+          },
+          {
+            "word": "tender",
+            "weight": 3.542
+          },
+          {
+            "word": "delicate",
+            "weight": 3.54
+          },
+          {
+            "word": "loyal",
+            "weight": 3.525
+          },
+          {
+            "word": "loving",
+            "weight": 3.416
+          },
+          {
+            "word": "romantic",
+            "weight": 3.342
+          }
+        ],
+        "negative": [
+          {
+            "word": "amazing",
+            "weight": -0.997
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -0.941
+          },
+          {
+            "word": "stressed",
+            "weight": -0.941
+          },
+          {
+            "word": "strange",
+            "weight": -0.931
+          },
+          {
+            "word": "marrying",
+            "weight": -0.853
+          },
+          {
+            "word": "weird",
+            "weight": -0.834
+          },
+          {
+            "word": "tortured",
+            "weight": -0.807
+          },
+          {
+            "word": "pleased",
+            "weight": -0.798
+          },
+          {
+            "word": "nervous",
+            "weight": -0.794
+          },
+          {
+            "word": "seriously",
+            "weight": -0.793
+          },
+          {
+            "word": "ache",
+            "weight": -0.788
+          },
+          {
+            "word": "helpless",
+            "weight": -0.779
+          }
+        ]
+      },
+      "sadness": {
+        "positive": [
+          {
+            "word": "lethargic",
+            "weight": 3.089
+          },
+          {
+            "word": "melancholy",
+            "weight": 2.996
+          },
+          {
+            "word": "unwelcome",
+            "weight": 2.885
+          },
+          {
+            "word": "ungrateful",
+            "weight": 2.846
+          },
+          {
+            "word": "burdened",
+            "weight": 2.806
+          },
+          {
+            "word": "groggy",
+            "weight": 2.789
+          },
+          {
+            "word": "lousy",
+            "weight": 2.788
+          },
+          {
+            "word": "gloomy",
+            "weight": 2.751
+          },
+          {
+            "word": "defeated",
+            "weight": 2.726
+          },
+          {
+            "word": "needy",
+            "weight": 2.709
+          },
+          {
+            "word": "disturbed",
+            "weight": 2.705
+          },
+          {
+            "word": "troubled",
+            "weight": 2.701
+          }
+        ],
+        "negative": [
+          {
+            "word": "strange",
+            "weight": -1.687
+          },
+          {
+            "word": "supporting",
+            "weight": -1.603
+          },
+          {
+            "word": "accepted",
+            "weight": -1.597
+          },
+          {
+            "word": "irritable",
+            "weight": -1.596
+          },
+          {
+            "word": "tortured",
+            "weight": -1.566
+          },
+          {
+            "word": "passionate",
+            "weight": -1.468
+          },
+          {
+            "word": "grumpy",
+            "weight": -1.416
+          },
+          {
+            "word": "wronged",
+            "weight": -1.413
+          },
+          {
+            "word": "irritated",
+            "weight": -1.397
+          },
+          {
+            "word": "sweet",
+            "weight": -1.396
+          },
+          {
+            "word": "selfish",
+            "weight": -1.383
+          },
+          {
+            "word": "faithful",
+            "weight": -1.363
+          }
+        ]
+      },
+      "surprise": {
+        "positive": [
+          {
+            "word": "amazed",
+            "weight": 4.588
+          },
+          {
+            "word": "impressed",
+            "weight": 4.518
+          },
+          {
+            "word": "surprised",
+            "weight": 4.413
+          },
+          {
+            "word": "shocked",
+            "weight": 4.374
+          },
+          {
+            "word": "curious",
+            "weight": 4.336
+          },
+          {
+            "word": "dazed",
+            "weight": 4.183
+          },
+          {
+            "word": "funny",
+            "weight": 4.08
+          },
+          {
+            "word": "overwhelmed",
+            "weight": 3.56
+          },
+          {
+            "word": "stunned",
+            "weight": 3.301
+          },
+          {
+            "word": "strange",
+            "weight": 3.164
+          },
+          {
+            "word": "weird",
+            "weight": 3.02
+          },
+          {
+            "word": "amazing",
+            "weight": 3.008
+          }
+        ],
+        "negative": [
+          {
+            "word": "stressed",
+            "weight": -0.64
+          },
+          {
+            "word": "mine",
+            "weight": -0.568
+          },
+          {
+            "word": "awkward",
+            "weight": -0.565
+          },
+          {
+            "word": "generous",
+            "weight": -0.549
+          },
+          {
+            "word": "your",
+            "weight": -0.537
+          },
+          {
+            "word": "lately",
+            "weight": -0.528
+          },
+          {
+            "word": "before",
+            "weight": -0.514
+          },
+          {
+            "word": "stop",
+            "weight": -0.509
+          },
+          {
+            "word": "more",
+            "weight": -0.503
+          },
+          {
+            "word": "break",
+            "weight": -0.473
+          },
+          {
+            "word": "super",
+            "weight": -0.472
+          },
+          {
+            "word": "lost",
+            "weight": -0.472
+          }
+        ]
+      }
+    },
+    "tfidf_lr": {
+      "anger": {
+        "positive": [
+          {
+            "word": "dangerous",
+            "weight": 5.131
+          },
+          {
+            "word": "greedy",
+            "weight": 5.12
+          },
+          {
+            "word": "resentful",
+            "weight": 4.904
+          },
+          {
+            "word": "insulted",
+            "weight": 4.901
+          },
+          {
+            "word": "dissatisfied",
+            "weight": 4.878
+          },
+          {
+            "word": "offended",
+            "weight": 4.871
+          },
+          {
+            "word": "rude",
+            "weight": 4.866
+          },
+          {
+            "word": "selfish",
+            "weight": 4.823
+          },
+          {
+            "word": "irritable",
+            "weight": 4.803
+          },
+          {
+            "word": "violent",
+            "weight": 4.723
+          },
+          {
+            "word": "fucked",
+            "weight": 4.719
+          },
+          {
+            "word": "irritated",
+            "weight": 4.701
+          }
+        ],
+        "negative": [
+          {
+            "word": "weird",
+            "weight": -1.853
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -1.769
+          },
+          {
+            "word": "strange",
+            "weight": -1.62
+          },
+          {
+            "word": "passionate",
+            "weight": -1.415
+          },
+          {
+            "word": "accepted",
+            "weight": -1.368
+          },
+          {
+            "word": "helpless",
+            "weight": -1.35
+          },
+          {
+            "word": "amazing",
+            "weight": -1.277
+          },
+          {
+            "word": "surprised",
+            "weight": -1.25
+          },
+          {
+            "word": "generous",
+            "weight": -1.244
+          },
+          {
+            "word": "beloved",
+            "weight": -1.233
+          },
+          {
+            "word": "supporting",
+            "weight": -1.229
+          },
+          {
+            "word": "caring",
+            "weight": -1.203
+          }
+        ]
+      },
+      "fear": {
+        "positive": [
+          {
+            "word": "terrified",
+            "weight": 5.672
+          },
+          {
+            "word": "shaken",
+            "weight": 5.641
+          },
+          {
+            "word": "pressured",
+            "weight": 5.546
+          },
+          {
+            "word": "vulnerable",
+            "weight": 5.3
+          },
+          {
+            "word": "uncertain",
+            "weight": 5.171
+          },
+          {
+            "word": "reluctant",
+            "weight": 5.149
+          },
+          {
+            "word": "scared",
+            "weight": 4.9
+          },
+          {
+            "word": "unsure",
+            "weight": 4.844
+          },
+          {
+            "word": "paranoid",
+            "weight": 4.77
+          },
+          {
+            "word": "shy",
+            "weight": 4.733
+          },
+          {
+            "word": "intimidated",
+            "weight": 4.713
+          },
+          {
+            "word": "shaky",
+            "weight": 4.657
+          }
+        ],
+        "negative": [
+          {
+            "word": "passionate",
+            "weight": -1.571
+          },
+          {
+            "word": "stressed",
+            "weight": -1.494
+          },
+          {
+            "word": "sweet",
+            "weight": -1.234
+          },
+          {
+            "word": "dazed",
+            "weight": -1.231
+          },
+          {
+            "word": "for",
+            "weight": -1.23
+          },
+          {
+            "word": "generous",
+            "weight": -1.163
+          },
+          {
+            "word": "supporting",
+            "weight": -1.133
+          },
+          {
+            "word": "curious",
+            "weight": -1.131
+          },
+          {
+            "word": "friends",
+            "weight": -1.122
+          },
+          {
+            "word": "beloved",
+            "weight": -1.122
+          },
+          {
+            "word": "amazed",
+            "weight": -1.109
+          },
+          {
+            "word": "amazing",
+            "weight": -1.096
+          }
+        ]
+      },
+      "joy": {
+        "positive": [
+          {
+            "word": "satisfied",
+            "weight": 3.651
+          },
+          {
+            "word": "divine",
+            "weight": 3.554
+          },
+          {
+            "word": "pleasant",
+            "weight": 3.552
+          },
+          {
+            "word": "innocent",
+            "weight": 3.542
+          },
+          {
+            "word": "valued",
+            "weight": 3.499
+          },
+          {
+            "word": "superior",
+            "weight": 3.485
+          },
+          {
+            "word": "ok",
+            "weight": 3.448
+          },
+          {
+            "word": "resolved",
+            "weight": 3.428
+          },
+          {
+            "word": "sincere",
+            "weight": 3.311
+          },
+          {
+            "word": "convinced",
+            "weight": 3.302
+          },
+          {
+            "word": "useful",
+            "weight": 3.279
+          },
+          {
+            "word": "successful",
+            "weight": 3.262
+          }
+        ],
+        "negative": [
+          {
+            "word": "strange",
+            "weight": -3.233
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -2.867
+          },
+          {
+            "word": "weird",
+            "weight": -2.691
+          },
+          {
+            "word": "agitated",
+            "weight": -2.671
+          },
+          {
+            "word": "hated",
+            "weight": -2.449
+          },
+          {
+            "word": "amazed",
+            "weight": -2.432
+          },
+          {
+            "word": "impressed",
+            "weight": -2.355
+          },
+          {
+            "word": "caring",
+            "weight": -2.325
+          },
+          {
+            "word": "tortured",
+            "weight": -2.303
+          },
+          {
+            "word": "helpless",
+            "weight": -2.194
+          },
+          {
+            "word": "stressed",
+            "weight": -2.145
+          },
+          {
+            "word": "pressured",
+            "weight": -2.129
+          }
+        ]
+      },
+      "love": {
+        "positive": [
+          {
+            "word": "caring",
+            "weight": 5.799
+          },
+          {
+            "word": "nostalgic",
+            "weight": 5.715
+          },
+          {
+            "word": "naughty",
+            "weight": 5.434
+          },
+          {
+            "word": "loving",
+            "weight": 5.432
+          },
+          {
+            "word": "sympathetic",
+            "weight": 5.356
+          },
+          {
+            "word": "longing",
+            "weight": 5.313
+          },
+          {
+            "word": "horny",
+            "weight": 5.299
+          },
+          {
+            "word": "hot",
+            "weight": 5.103
+          },
+          {
+            "word": "tender",
+            "weight": 5.069
+          },
+          {
+            "word": "lovely",
+            "weight": 5.041
+          },
+          {
+            "word": "liked",
+            "weight": 5.003
+          },
+          {
+            "word": "loyal",
+            "weight": 4.751
+          }
+        ],
+        "negative": [
+          {
+            "word": "strange",
+            "weight": -1.294
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -1.229
+          },
+          {
+            "word": "weird",
+            "weight": -1.163
+          },
+          {
+            "word": "amazing",
+            "weight": -1.137
+          },
+          {
+            "word": "stressed",
+            "weight": -1.101
+          },
+          {
+            "word": "hated",
+            "weight": -1.015
+          },
+          {
+            "word": "an",
+            "weight": -0.967
+          },
+          {
+            "word": "helpless",
+            "weight": -0.958
+          },
+          {
+            "word": "pretty",
+            "weight": -0.957
+          },
+          {
+            "word": "tortured",
+            "weight": -0.953
+          },
+          {
+            "word": "agitated",
+            "weight": -0.93
+          },
+          {
+            "word": "was",
+            "weight": -0.925
+          }
+        ]
+      },
+      "sadness": {
+        "positive": [
+          {
+            "word": "melancholy",
+            "weight": 4.364
+          },
+          {
+            "word": "lethargic",
+            "weight": 4.343
+          },
+          {
+            "word": "burdened",
+            "weight": 4.102
+          },
+          {
+            "word": "unwelcome",
+            "weight": 3.876
+          },
+          {
+            "word": "missed",
+            "weight": 3.855
+          },
+          {
+            "word": "punished",
+            "weight": 3.79
+          },
+          {
+            "word": "homesick",
+            "weight": 3.784
+          },
+          {
+            "word": "groggy",
+            "weight": 3.736
+          },
+          {
+            "word": "gloomy",
+            "weight": 3.716
+          },
+          {
+            "word": "lousy",
+            "weight": 3.713
+          },
+          {
+            "word": "awkward",
+            "weight": 3.676
+          },
+          {
+            "word": "exhausted",
+            "weight": 3.654
+          }
+        ],
+        "negative": [
+          {
+            "word": "strange",
+            "weight": -2.742
+          },
+          {
+            "word": "weird",
+            "weight": -2.3
+          },
+          {
+            "word": "supporting",
+            "weight": -2.238
+          },
+          {
+            "word": "accepted",
+            "weight": -2.221
+          },
+          {
+            "word": "sweet",
+            "weight": -2.215
+          },
+          {
+            "word": "agitated",
+            "weight": -2.159
+          },
+          {
+            "word": "tortured",
+            "weight": -2.139
+          },
+          {
+            "word": "passionate",
+            "weight": -2.138
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -2.058
+          },
+          {
+            "word": "amazed",
+            "weight": -2.0
+          },
+          {
+            "word": "irritable",
+            "weight": -1.96
+          },
+          {
+            "word": "amazing",
+            "weight": -1.921
+          }
+        ]
+      },
+      "surprise": {
+        "positive": [
+          {
+            "word": "amazed",
+            "weight": 7.249
+          },
+          {
+            "word": "impressed",
+            "weight": 7.02
+          },
+          {
+            "word": "surprised",
+            "weight": 6.846
+          },
+          {
+            "word": "curious",
+            "weight": 6.385
+          },
+          {
+            "word": "shocked",
+            "weight": 6.27
+          },
+          {
+            "word": "funny",
+            "weight": 6.041
+          },
+          {
+            "word": "dazed",
+            "weight": 5.576
+          },
+          {
+            "word": "overwhelmed",
+            "weight": 5.303
+          },
+          {
+            "word": "weird",
+            "weight": 4.668
+          },
+          {
+            "word": "strange",
+            "weight": 4.584
+          },
+          {
+            "word": "amazing",
+            "weight": 4.433
+          },
+          {
+            "word": "stunned",
+            "weight": 3.881
+          }
+        ],
+        "negative": [
+          {
+            "word": "feel",
+            "weight": -1.041
+          },
+          {
+            "word": "more",
+            "weight": -0.842
+          },
+          {
+            "word": "to",
+            "weight": -0.689
+          },
+          {
+            "word": "your",
+            "weight": -0.631
+          },
+          {
+            "word": "stressed",
+            "weight": -0.627
+          },
+          {
+            "word": "before",
+            "weight": -0.616
+          },
+          {
+            "word": "being",
+            "weight": -0.613
+          },
+          {
+            "word": "lately",
+            "weight": -0.571
+          },
+          {
+            "word": "right",
+            "weight": -0.571
+          },
+          {
+            "word": "kind",
+            "weight": -0.565
+          },
+          {
+            "word": "sweet",
+            "weight": -0.549
+          },
+          {
+            "word": "agitated",
+            "weight": -0.545
+          }
+        ]
+      }
+    }
+  }
 }

@@ -1,12 +1,12 @@
 'use strict';
 
 const EMOTION_META = {
-  sadness:  { emoji: '😢', color: '#3b82f6' },
-  anger:    { emoji: '😠', color: '#ef4444' },
-  love:     { emoji: '❤️', color: '#ec4899' },
-  surprise: { emoji: '😲', color: '#14b8a6' },
-  fear:     { emoji: '😨', color: '#a855f7' },
-  joy:      { emoji: '😄', color: '#eab308' },
+  sadness:  { emoji: '😢', color: '#2563eb' },
+  anger:    { emoji: '😠', color: '#dc2626' },
+  love:     { emoji: '❤️', color: '#db2777' },
+  surprise: { emoji: '😲', color: '#0d9488' },
+  fear:     { emoji: '😨', color: '#7c3aed' },
+  joy:      { emoji: '😄', color: '#d97706' },
 };
 
 const CHIP_SAMPLES = {
@@ -19,17 +19,19 @@ const CHIP_SAMPLES = {
   negation: 'I did not feel humiliated or angry, actually I felt relieved and grateful.',
 };
 
-const HISTORY_KEY = 'emotisense_history_v2';
+const HISTORY_KEY = 'emotisense_history_v21';
 let history = loadHistory();
 let benchmarksData = null;
 let batchCsvExport = '';
 let lastAnalyzedText = '';
 let agentHistory = [];
 let previousInteractionId = null;
+let hesitationTimer = null;
+let nudgedEmotion = false;
 
 let sessionChart = null;
 let batchChart = null;
-let benchModelsChart = null;
+let benchFoldsChart = null;
 
 const $ = id => document.getElementById(id);
 
@@ -39,31 +41,68 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderHistory();
   renderSessionChart();
   await Promise.all([checkHealth(), loadBenchmarks()]);
+
+  setTimeout(() => {
+    $('agent-drawer').classList.remove('closed');
+    resetAgentGreeting();
+  }, 1100);
 });
 
-/* ---------------- Health & Benchmarks ---------------- */
+/* ---------------- Proactive Concierge + 3-Second Hesitation ---------------- */
+function armEmotionHesitation() {
+  clearTimeout(hesitationTimer);
+  if (nudgedEmotion || $('textInput').value.trim().length > 0) return;
+  hesitationTimer = setTimeout(() => {
+    if (nudgedEmotion || $('textInput').value.trim().length > 0) return;
+    nudgedEmotion = true;
+    $('agent-drawer').classList.remove('closed');
+    appendCoachMessage(
+      'Not sure what to type yet? Pick a quick prompt below and I’ll load and analyze it for you immediately!',
+      [
+        { label: 'Test Gratitude / Joy', fill_text: CHIP_SAMPLES.joy },
+        { label: 'Test Stress / Fear', fill_text: CHIP_SAMPLES.fear },
+        { label: 'Test Negation ("Not Angry")', fill_text: CHIP_SAMPLES.negation },
+      ],
+      ['Explain why BoW beat TF-IDF']
+    );
+  }, 3200);
+}
+
+function resetAgentGreeting() {
+  agentHistory = [];
+  previousInteractionId = null;
+  $('agent-messages').innerHTML = '';
+  appendCoachMessage(
+    'Hi there! 👋 Welcome to **EmotiSense AI**.\n\nWould you like to test how a sentence or journal feels, or explore our **NLP Research Lab** (BoW 89.84% vs TF-IDF 84.97% + learned token weights)?',
+    [],
+    [
+      'Not sure what to write — give examples',
+      'Open NLP Research Lab',
+      'Explain why BoW beat TF-IDF',
+    ]
+  );
+}
+
+/* ---------------- Health & Metadata ---------------- */
 async function checkHealth() {
   const pill = $('header-health-pill');
-  const dot = $('agent-status-dot');
-  const keyBadge = $('agent-key-badge');
+  const badge = $('agent-key-badge');
   try {
     const res = await fetch('/health');
     const data = await res.json();
     const serverOk = Boolean(data?.llm_agent?.configured);
     const hasSession = Boolean(sessionStorage.getItem('emotisense_agent_apikey'));
-    pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>BoW+LR Ready · ${Number(data.vocab_size || 0).toLocaleString()} tokens · sklearn ${data.sklearn_version}</span>`;
+    pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>BoW+LR Winner (89.84%) · ${Number(data.vocab_size || 0).toLocaleString()} tokens · sklearn ${data.sklearn_version}</span>`;
 
     if (serverOk || hasSession) {
-      dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-      keyBadge.textContent = serverOk ? 'Server Key Active' : 'Session Key Active';
-      keyBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30';
+      badge.textContent = 'Gemini / LLM Active';
+      badge.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold';
     } else {
-      dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-      keyBadge.textContent = 'API Key Needed';
-      keyBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/30';
+      badge.textContent = 'Guided NLP Active';
+      badge.className = 'text-[10px] px-2 py-0.5 rounded bg-white border border-purple-200 text-violet-800 font-bold';
     }
   } catch {
-    pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>Backend Offline</span>`;
+    pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>Backend Offline</span>`;
   }
 }
 
@@ -76,17 +115,16 @@ async function loadBenchmarks() {
   }
 }
 
-/* ---------------- Tabs ---------------- */
 function switchTab(tab) {
-  ['studio', 'batch', 'benchmarks'].forEach(id => {
+  ['studio', 'research', 'batch'].forEach(id => {
     $(`tab-${id}`).classList.toggle('hidden', id !== tab);
     $(`tab-btn-${id}`).classList.toggle('active', id === tab);
   });
-  if (tab === 'benchmarks') setTimeout(renderBenchmarksTab, 80);
+  if (tab === 'research') setTimeout(renderResearchLab, 80);
 }
 
-/* ---------------- Text Input Controls ---------------- */
 $('textInput').addEventListener('input', () => {
+  clearTimeout(hesitationTimer);
   $('charCount').textContent = $('textInput').value.length;
   $('inputError').textContent = '';
 });
@@ -102,7 +140,7 @@ function loadChipSample(key) {
   $('textInput').value = CHIP_SAMPLES[key] || '';
   $('charCount').textContent = $('textInput').value.length;
   $('inputError').textContent = '';
-  $('textInput').focus();
+  $('predictForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 }
 
 function clearInput() {
@@ -112,40 +150,27 @@ function clearInput() {
   $('resultSection').classList.add('hidden');
 }
 
-/* ---------------- Prediction Flow ---------------- */
 $('predictForm').addEventListener('submit', async e => {
   e.preventDefault();
   const text = $('textInput').value.trim();
-  if (!text) {
-    $('inputError').textContent = 'Please enter some text to classify.';
-    return;
-  }
+  if (!text) { $('inputError').textContent = 'Please type a sentence first.'; return; }
 
   const btn = $('analyzeBtn');
   btn.disabled = true;
   $('analyzeBtnLabel').textContent = 'Analysing...';
-
   try {
     const res = await fetch('/api/predict', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        model: $('modelSelect').value,
-        compare_models: $('compareToggle').checked,
-      }),
+      body: JSON.stringify({ text, model: $('modelSelect').value, compare_models: $('compareToggle').checked }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      $('inputError').textContent = data.error || 'Prediction failed.';
-      return;
-    }
-
+    if (!res.ok) { $('inputError').textContent = data.error; return; }
     lastAnalyzedText = text;
     renderResult(data);
     pushHistory(data);
   } catch (err) {
-    $('inputError').textContent = `Network error: ${err.message}`;
+    $('inputError').textContent = err.message;
   } finally {
     btn.disabled = false;
     $('analyzeBtnLabel').textContent = 'Analyse Emotion';
@@ -153,137 +178,100 @@ $('predictForm').addEventListener('submit', async e => {
 });
 
 function renderResult(data) {
-  const meta = EMOTION_META[data.emotion] || { emoji: '🤖', color: '#6366f1' };
+  const meta = EMOTION_META[data.emotion] || { emoji: '🤖', color: '#6d28d9' };
   $('resultSection').classList.remove('hidden');
   $('resultEmoji').textContent = meta.emoji;
   $('resultEmotion').textContent = data.emotion;
   $('resultEmotion').style.color = meta.color;
   $('resultModelBadge').textContent = `${data.model_name} · Test ${data.accuracy}`;
-  $('resultRunnerUp').textContent = `Confidence margin vs ${data.runner_up.emotion} (${data.runner_up.confidence}%): +${data.margin_pct}%`;
+  $('resultRunnerUp').textContent = `Lead over ${data.runner_up.emotion} (${data.runner_up.confidence}%): +${data.margin_pct}%`;
 
   const ring = $('confRingFill');
   ring.style.stroke = meta.color;
   ring.style.strokeDashoffset = String(97.4 * (1 - data.confidence / 100));
   $('confPct').textContent = `${Math.round(data.confidence)}%`;
 
-  // Inline XAI Sentence Heatmap
-  const heatmap = $('sentenceHeatmap');
-  heatmap.innerHTML = (data.sentence_tokens || []).map(tok => {
+  $('sentenceHeatmap').innerHTML = (data.sentence_tokens || []).map(tok => {
     const cls = tok.impact === 'positive' ? 'token-pos' : (tok.impact === 'negative' ? 'token-neg' : 'token-oov');
-    const title = tok.impact === 'oov' ? 'Out of vocabulary' : `Weight contribution: ${tok.score > 0 ? '+' : ''}${tok.score}`;
-    return `<span class="token-pill ${cls}" title="${title}">${escapeHtml(tok.word)}</span>`;
+    return `<span class="token-pill ${cls}" title="Weight: ${tok.score}">${escapeHtml(tok.word)}</span>`;
   }).join('');
 
-  // Probability bars
-  const sortedProbs = Object.entries(data.all_probabilities).sort((a, b) => b[1] - a[1]);
-  $('probGrid').innerHTML = sortedProbs.map(([lbl, pct]) => {
-    const m = EMOTION_META[lbl] || { emoji: '🤖', color: '#6366f1' };
+  $('probGrid').innerHTML = Object.entries(data.all_probabilities).sort((a, b) => b[1] - a[1]).map(([lbl, pct]) => {
+    const m = EMOTION_META[lbl] || { emoji: '🤖', color: '#6d28d9' };
     return `
       <div class="flex items-center gap-3 text-xs">
-        <div class="w-24 shrink-0 font-semibold capitalize text-slate-200">${m.emoji} ${lbl}</div>
-        <div class="flex-1 h-2 rounded-full bg-slate-900 overflow-hidden">
-          <div class="prob-fill h-full rounded-full" style="width:${pct}%; background:${m.color}"></div>
-        </div>
-        <div class="w-12 text-right font-mono font-bold text-slate-300">${pct.toFixed(1)}%</div>
+        <div class="w-24 shrink-0 font-bold capitalize text-slate-700">${m.emoji} ${lbl}</div>
+        <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div class="prob-fill h-full rounded-full" style="width:${pct}%;background:${m.color}"></div></div>
+        <div class="w-12 text-right font-mono font-bold text-slate-700">${pct.toFixed(1)}%</div>
       </div>
     `;
   }).join('');
 
-  // Trigger chips
   $('xaiPosChips').innerHTML = (data.token_importance || []).length
     ? data.token_importance.map(t => `<span class="token-pill token-pos">+${t.score.toFixed(2)} ${escapeHtml(t.word)}</span>`).join('')
-    : '<span class="text-xs text-slate-500">No positive trigger words matched.</span>';
+    : '<span class="text-xs text-slate-400">None matched.</span>';
 
   $('xaiNegChips').innerHTML = (data.opposing_tokens || []).length
     ? data.opposing_tokens.map(t => `<span class="token-pill token-neg">${t.score.toFixed(2)} ${escapeHtml(t.word)}</span>`).join('')
-    : '<span class="text-xs text-slate-500">No strong opposing tokens matched.</span>';
+    : '<span class="text-xs text-slate-400">None matched.</span>';
 
-  // 4-Model Arena
-  const arenaSec = $('arenaSection');
   if (data.arena) {
-    arenaSec.classList.remove('hidden');
+    $('arenaSection').classList.remove('hidden');
     const a = data.arena;
-    const badge = $('arenaConsensusBadge');
-    badge.textContent = a.unanimous
+    $('arenaConsensusBadge').textContent = a.unanimous
       ? `Unanimous (${a.consensus_count}/${a.total_models} ${capitalise(a.consensus_emotion)})`
       : `Majority (${a.consensus_count}/${a.total_models} ${capitalise(a.consensus_emotion)})`;
 
     $('arenaGrid').innerHTML = a.models.map(m => `
-      <div class="glass-card p-3.5 rounded-xl flex items-center justify-between gap-2">
+      <div class="soft-card p-3.5 rounded-xl flex items-center justify-between gap-2">
         <div>
-          <div class="text-xs font-bold text-white">${escapeHtml(m.name)}</div>
-          <div class="text-[10px] font-mono text-slate-400">${escapeHtml(m.badge)} · Test ${m.test_accuracy}%</div>
+          <div class="text-xs font-bold text-slate-900">${escapeHtml(m.name)}</div>
+          <div class="text-[10px] font-mono text-slate-500">Test ${m.test_accuracy}%</div>
         </div>
         <div class="text-right">
           <div class="text-sm font-bold capitalize" style="color:${m.color}">${m.emoji} ${m.emotion}</div>
-          <div class="text-[11px] font-mono text-slate-300">${m.confidence.toFixed(1)}%</div>
+          <div class="text-[11px] font-mono text-slate-600">${m.confidence.toFixed(1)}%</div>
         </div>
       </div>
     `).join('');
   } else {
-    arenaSec.classList.add('hidden');
+    $('arenaSection').classList.add('hidden');
   }
 
-  // Sync Agent live context banner
   $('agent-context-pill').firstElementChild.textContent =
-    `Synced: "${data.original_text.slice(0, 32)}..." -> ${capitalise(data.emotion)} (${data.confidence}%)`;
+    `Live Sync: "${data.original_text.slice(0, 28)}..." -> ${capitalise(data.emotion)} (${data.confidence}%)`;
 }
 
 /* ---------------- History & Session Chart ---------------- */
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
-  catch { return []; }
-}
-
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; } }
 function pushHistory(data) {
-  history.unshift({
-    emotion: data.emotion,
-    confidence: data.confidence,
-    text: data.original_text,
-    ts: Date.now(),
-  });
+  history.unshift({ emotion: data.emotion, confidence: data.confidence, text: data.original_text, ts: Date.now() });
   if (history.length > 25) history.pop();
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   renderHistory();
   renderSessionChart();
 }
-
-function clearHistory() {
-  history = [];
-  localStorage.removeItem(HISTORY_KEY);
-  renderHistory();
-  renderSessionChart();
-}
+function clearHistory() { history = []; localStorage.removeItem(HISTORY_KEY); renderHistory(); renderSessionChart(); }
 
 function renderHistory() {
-  $('sessionCountBadge').textContent = `${history.length} samples`;
+  $('sessionCountBadge').textContent = `${history.length} entries`;
   const list = $('historyList');
-  if (!history.length) {
-    list.innerHTML = '<li class="text-xs text-slate-500 text-center py-6">No analyses yet. Submit a sentence on the left!</li>';
-    return;
-  }
+  if (!history.length) { list.innerHTML = '<li class="text-xs text-slate-400 text-center py-6">Run your first sentence on the left!</li>'; return; }
   list.innerHTML = history.map(h => {
-    const m = EMOTION_META[h.emotion] || { emoji: '🤖', color: '#6366f1' };
+    const m = EMOTION_META[h.emotion] || { emoji: '🤖', color: '#6d28d9' };
     return `
-      <li onclick="reloadFromHistory(${JSON.stringify(h.text).replace(/"/g, '&quot;')})" class="glass-card p-2.5 rounded-xl flex items-center justify-between gap-2 cursor-pointer">
+      <li onclick="reloadFromHistory(${JSON.stringify(h.text).replace(/"/g, '&quot;')})" class="soft-card p-2.5 rounded-xl flex items-center justify-between gap-2 cursor-pointer">
         <div class="flex items-center gap-2.5 min-w-0">
           <span class="text-lg">${m.emoji}</span>
-          <div class="min-w-0">
-            <div class="text-xs font-bold capitalize" style="color:${m.color}">${h.emotion}</div>
-            <div class="text-[11px] text-slate-400 truncate">${escapeHtml(h.text)}</div>
-          </div>
+          <div class="min-w-0"><div class="text-xs font-bold capitalize" style="color:${m.color}">${h.emotion}</div><div class="text-[11px] text-slate-500 truncate">${escapeHtml(h.text)}</div></div>
         </div>
-        <span class="text-[11px] font-mono font-bold text-slate-300 shrink-0">${h.confidence.toFixed(0)}%</span>
+        <span class="text-[11px] font-mono font-bold text-slate-700 shrink-0">${h.confidence.toFixed(0)}%</span>
       </li>
     `;
   }).join('');
 }
 
-function reloadFromHistory(txt) {
-  $('textInput').value = txt;
-  $('charCount').textContent = txt.length;
-  $('predictForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-}
+function reloadFromHistory(txt) { $('textInput').value = txt; $('charCount').textContent = txt.length; $('predictForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); }
 
 function renderSessionChart() {
   const counts = {};
@@ -292,64 +280,106 @@ function renderSessionChart() {
   if (sessionChart) sessionChart.destroy();
   sessionChart = new Chart($('sessionChart'), {
     type: 'doughnut',
-    data: {
-      labels: Object.keys(counts).map(capitalise),
-      datasets: [{
-        data: Object.values(counts),
-        backgroundColor: Object.keys(counts).map(k => EMOTION_META[k].color),
-        borderWidth: 0,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'right', labels: { color: '#cbd5e1', boxWidth: 10, font: { size: 11 } } } },
-    },
+    data: { labels: Object.keys(counts).map(capitalise), datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => EMOTION_META[k].color), borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 11 } } } } },
   });
 }
 
-/* ---------------- Batch Automation Tab ---------------- */
+/* ---------------- NLP Research Lab ---------------- */
+function renderResearchLab() {
+  if (!benchmarksData?.benchmarks) return;
+  const rows = benchmarksData.benchmarks;
+  const colors = ['#6d28d9', '#db2777', '#0d9488', '#d97706'];
+  if (benchFoldsChart) benchFoldsChart.destroy();
+  benchFoldsChart = new Chart($('benchFoldsChart'), {
+    type: 'line',
+    data: {
+      labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'],
+      datasets: rows.map((b, i) => ({
+        label: b.model,
+        data: (b.cv_fold_accuracies || []).map(v => +(v * 100).toFixed(2)),
+        borderColor: colors[i],
+        backgroundColor: colors[i],
+        tension: 0.25,
+      })),
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 55, max: 95 } } },
+  });
+  renderMatrixAndReport();
+  renderVocabExplorer();
+}
+
+function renderMatrixAndReport() {
+  if (!benchmarksData?.benchmarks) return;
+  const b = benchmarksData.benchmarks.find(r => r.key === $('cmModelSelect').value) || benchmarksData.benchmarks[0];
+  const labels = benchmarksData.labels;
+  const cm = b.confusion_matrix;
+  const maxVal = Math.max(...cm.flat(), 1);
+
+  let html = '<table class="w-full text-[11px] border-separate border-spacing-1"><thead><tr><th class="p-1 text-slate-400">Act\\Pred</th>';
+  labels.forEach(l => { html += `<th class="p-1 capitalize text-slate-700">${l.slice(0, 4)}</th>`; });
+  html += '</tr></thead><tbody>';
+  cm.forEach((row, rIdx) => {
+    html += `<tr><td class="p-1 font-bold capitalize text-slate-700">${labels[rIdx]}</td>`;
+    row.forEach((val, cIdx) => {
+      const ratio = val / maxVal;
+      const bg = rIdx === cIdx ? `rgba(16, 185, 129, ${Math.max(0.16, ratio * 0.85)})` : `rgba(244, 63, 94, ${Math.max(0.06, ratio * 0.65)})`;
+      html += `<td class="cm-cell text-slate-900" style="background:${bg}">${val}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  $('confusionMatrixGrid').innerHTML = html;
+
+  $('perClassTbody').innerHTML = labels.map(lbl => {
+    const pc = b.per_class[lbl];
+    const m = EMOTION_META[lbl] || { emoji: '🤖', color: '#6d28d9' };
+    return `<tr><td class="p-3 font-bold capitalize" style="color:${m.color}">${m.emoji} ${lbl}</td><td class="p-3 font-mono">${(pc.precision * 100).toFixed(2)}%</td><td class="p-3 font-mono">${(pc.recall * 100).toFixed(2)}%</td><td class="p-3 font-mono font-bold text-slate-900">${(pc.f1 * 100).toFixed(2)}%</td><td class="p-3 font-mono text-slate-500">${pc.support}</td></tr>`;
+  }).join('');
+}
+
+function renderVocabExplorer() {
+  if (!benchmarksData?.top_tokens) return;
+  const model = $('vocabModelSelect').value;
+  const emo = $('vocabEmotionSelect').value;
+  const data = benchmarksData.top_tokens?.[model]?.[emo];
+  if (!data) return;
+  $('vocabPosList').innerHTML = data.positive.map(t => `<span class="token-pill token-pos">+${t.weight} ${escapeHtml(t.word)}</span>`).join('');
+  $('vocabNegList').innerHTML = data.negative.map(t => `<span class="token-pill token-neg">${t.weight} ${escapeHtml(t.word)}</span>`).join('');
+}
+
+/* ---------------- Batch Automation ---------------- */
 async function runDemoBatch() {
-  const demoLines = [
+  const lines = [
     'I am thrilled and grateful for our engineering launch today!',
-    'I feel exhausted and deeply sad after hearing the bad news.',
+    'I feel exhausted and deeply sad after hearing the news.',
     'This constant delay makes me furious and frustrated.',
-    'I am genuinely scared about the upcoming medical test results.',
+    'I am scared about the upcoming test results.',
     'I love spending quiet weekends with my family.',
     'Whoa, I never saw that twist coming at all!',
-    'I did not feel angry at all, I actually felt relieved.',
-    'Everything feels hopeless and lonely tonight.',
+    'I did not feel angry at all, I felt relieved.',
+    'Everything feels lonely tonight.',
     'My heart is bursting with joy and pride!',
-    'I feel anxious and uneasy walking home alone.',
+    'I feel anxious walking home alone.',
   ];
-  await submitBatchJson({ lines: demoLines });
+  await submitBatchJson({ lines });
 }
 
 function handleBatchFile(file) {
   if (!file) return;
   const fd = new FormData();
   fd.append('file', file);
-  fetch('/api/batch', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(renderBatchResults)
-    .catch(err => alert(err.message));
+  fetch('/api/batch', { method: 'POST', body: fd }).then(r => r.json()).then(renderBatchResults);
 }
 
 function runPastedBatch() {
-  const raw = $('batchTextArea').value.trim();
-  if (!raw) return;
-  submitBatchJson({ raw_text: raw });
+  const raw_text = $('batchTextArea').value.trim();
+  if (raw_text) submitBatchJson({ raw_text });
 }
 
 async function submitBatchJson(payload) {
-  const res = await fetch('/api/batch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) { alert(data.error || 'Batch failed'); return; }
-  renderBatchResults(data);
+  const res = await fetch('/api/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  renderBatchResults(await res.json());
 }
 
 function renderBatchResults(data) {
@@ -360,194 +390,91 @@ function renderBatchResults(data) {
   $('batchAgree').textContent = `${data.summary.agreement_rate}%`;
   batchCsvExport = data.csv_export || '';
 
-  $('batchTriggerCloud').innerHTML = (data.summary.top_triggers || []).map(t =>
-    `<span class="token-pill token-pos">${escapeHtml(t.word)} (${t.count})</span>`
-  ).join('');
-
-  $('batchTableBody').innerHTML = data.rows.map(r => `
-    <tr class="hover:bg-slate-900/45">
-      <td class="p-2.5 font-mono text-slate-400">${r.row_id}</td>
-      <td class="p-2.5 text-slate-200 max-w-xs truncate" title="${escapeHtml(r.text)}">${escapeHtml(r.text)}</td>
-      <td class="p-2.5 font-semibold capitalize" style="color:${r.color}">${r.emoji} ${r.emotion} (${r.confidence}%)</td>
-      <td class="p-2.5 capitalize text-slate-300">${r.tfidf_emotion} (${r.tfidf_confidence}%)</td>
-      <td class="p-2.5 font-mono text-emerald-300">${escapeHtml(r.top_trigger || '-')}</td>
-    </tr>
-  `).join('');
+  $('batchTriggerCloud').innerHTML = (data.summary.top_triggers || []).map(t => `<span class="token-pill token-pos">${escapeHtml(t.word)} (${t.count})</span>`).join('');
+  $('batchTableBody').innerHTML = data.rows.map(r => `<tr><td class="p-2.5 font-mono text-slate-500">${r.row_id}</td><td class="p-2.5 max-w-xs truncate">${escapeHtml(r.text)}</td><td class="p-2.5 font-bold capitalize" style="color:${r.color}">${r.emoji} ${r.emotion} (${r.confidence}%)</td><td class="p-2.5 capitalize">${r.tfidf_emotion} (${r.tfidf_confidence}%)</td><td class="p-2.5 font-mono text-emerald-700">${escapeHtml(r.top_trigger || '-')}</td></tr>`).join('');
 
   const dist = data.summary.distribution;
   if (batchChart) batchChart.destroy();
   batchChart = new Chart($('batchChart'), {
     type: 'bar',
-    data: {
-      labels: Object.keys(dist).map(capitalise),
-      datasets: [{
-        label: 'Entries',
-        data: Object.values(dist),
-        backgroundColor: Object.keys(dist).map(k => EMOTION_META[k].color),
-        borderRadius: 5,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
-      },
-      plugins: { legend: { display: false } },
-    },
+    data: { labels: Object.keys(dist).map(capitalise), datasets: [{ label: 'Entries', data: Object.values(dist), backgroundColor: Object.keys(dist).map(k => EMOTION_META[k].color), borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
   });
 }
 
 function downloadBatchCsv() {
   if (!batchCsvExport) return;
-  const blob = new Blob([batchCsvExport], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([batchCsvExport], { type: 'text/csv' }));
   a.download = 'emotisense_batch_results.csv';
   a.click();
 }
 
-/* ---------------- Benchmarks & Confusion Matrix Tab ---------------- */
-function renderBenchmarksTab() {
-  if (!benchmarksData?.benchmarks) return;
-  const rows = benchmarksData.benchmarks;
-  if (benchModelsChart) benchModelsChart.destroy();
-  benchModelsChart = new Chart($('benchModelsChart'), {
-    type: 'bar',
-    data: {
-      labels: rows.map(r => r.model),
-      datasets: [
-        { label: '5-Fold CV Accuracy (%)', data: rows.map(r => +(r.cv_accuracy * 100).toFixed(2)), backgroundColor: 'rgba(99, 102, 241, 0.8)', borderRadius: 5 },
-        { label: 'Held-Out Test Accuracy (%)', data: rows.map(r => +(r.test_accuracy * 100).toFixed(2)), backgroundColor: 'rgba(236, 72, 153, 0.8)', borderRadius: 5 },
-        { label: 'Test Macro F1 (%)', data: rows.map(r => +(r.macro_f1 * 100).toFixed(2)), backgroundColor: 'rgba(20, 184, 166, 0.8)', borderRadius: 5 },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
-        y: { min: 20, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
-      },
-      plugins: { legend: { labels: { color: '#e2e8f0' } } },
-    },
-  });
-  renderMatrixAndReport();
-}
+/* ---------------- Proactive EmotiCoach AI Drawer ---------------- */
+function toggleAgentDrawer() { $('agent-drawer').classList.toggle('closed'); }
 
-function renderMatrixAndReport() {
-  if (!benchmarksData?.benchmarks) return;
-  const key = $('cmModelSelect').value;
-  const b = benchmarksData.benchmarks.find(r => r.key === key) || benchmarksData.benchmarks[0];
-  const labels = benchmarksData.labels;
-  const cm = b.confusion_matrix;
-  const maxVal = Math.max(...cm.flat(), 1);
-
-  let html = '<table class="w-full text-[11px] border-separate border-spacing-1"><thead><tr><th class="p-1 text-slate-500">Act\\Pred</th>';
-  labels.forEach(l => { html += `<th class="p-1 capitalize text-slate-300">${l.slice(0, 4)}</th>`; });
-  html += '</tr></thead><tbody>';
-  cm.forEach((row, rIdx) => {
-    html += `<tr><td class="p-1 font-bold capitalize text-slate-300">${labels[rIdx]}</td>`;
-    row.forEach((val, cIdx) => {
-      const alpha = Math.max(0.12, Math.min(0.85, val / maxVal));
-      const bg = rIdx === cIdx ? `rgba(16, 185, 129, ${alpha})` : `rgba(244, 63, 94, ${alpha * 0.7})`;
-      html += `<td class="cm-cell text-white" style="background:${bg}">${val}</td>`;
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-  $('confusionMatrixGrid').innerHTML = html;
-
-  $('perClassTbody').innerHTML = labels.map(lbl => {
-    const pc = b.per_class[lbl];
-    const m = EMOTION_META[lbl] || { emoji: '🤖', color: '#6366f1' };
-    return `
-      <tr>
-        <td class="p-3 font-bold capitalize" style="color:${m.color}">${m.emoji} ${lbl}</td>
-        <td class="p-3 font-mono">${(pc.precision * 100).toFixed(2)}%</td>
-        <td class="p-3 font-mono">${(pc.recall * 100).toFixed(2)}%</td>
-        <td class="p-3 font-mono font-bold text-white">${(pc.f1 * 100).toFixed(2)}%</td>
-        <td class="p-3 font-mono text-slate-400">${pc.support}</td>
-      </tr>
-    `;
-  }).join('');
-}
-
-/* ---------------- 1-on-1 EmotiAgent AI ---------------- */
-function toggleAgentDrawer() {
-  $('agent-drawer').classList.toggle('closed');
-}
-
-function openAgentWithCurrentText() {
+function askCoachTopic(prompt) {
   $('agent-drawer').classList.remove('closed');
-  $('agent-input').value = 'Explain why this sentence got its emotion prediction, which trigger words drove it, and how I could reframe it.';
-  submitAgentChat(new Event('submit'));
-}
-
-function sendQuickPrompt(txt) {
-  $('agent-input').value = txt;
-  submitAgentChat(new Event('submit'));
-}
-
-function openAgentSettings() {
-  $('agent-settings-modal').classList.remove('hidden');
-  $('agent-settings-modal').classList.add('flex');
-}
-
-function closeAgentSettings() {
-  $('agent-settings-modal').classList.add('hidden');
-  $('agent-settings-modal').classList.remove('flex');
-}
-
-function loadSavedAgentSettings() {
-  $('agent-provider-select').value = sessionStorage.getItem('emotisense_agent_provider') || 'gemini';
-  $('agent-apikey-input').value = sessionStorage.getItem('emotisense_agent_apikey') || '';
-}
-
-function saveAgentSettings() {
-  const p = $('agent-provider-select').value;
-  const k = $('agent-apikey-input').value.trim();
-  sessionStorage.setItem('emotisense_agent_provider', p);
-  if (k) sessionStorage.setItem('emotisense_agent_apikey', k);
-  else sessionStorage.removeItem('emotisense_agent_apikey');
-  closeAgentSettings();
-  checkHealth();
-}
-
-function clearAgentKey() {
-  sessionStorage.removeItem('emotisense_agent_apikey');
-  $('agent-apikey-input').value = '';
-  checkHealth();
-}
-
-function clearAgentChat() {
-  agentHistory = [];
-  previousInteractionId = null;
-  $('agent-messages').innerHTML = `
-    <div class="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-200 leading-relaxed">
-      <p class="font-bold text-pink-300 mb-1">Fresh EmotiAgent Session</p>
-      <p>Ask me about token weights, negation effects, tone rewriting, or your mood trends.</p>
-    </div>
-  `;
-}
-
-function appendAgentMsg(role, content, meta = '') {
-  const box = $('agent-messages');
-  const div = document.createElement('div');
-  if (role === 'user') {
-    div.className = 'ml-8 p-3 rounded-2xl bg-pink-600/25 border border-pink-500/40 text-white';
-    div.textContent = content;
-  } else if (role === 'error') {
-    div.className = 'mr-4 p-3 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 space-y-2';
-    div.innerHTML = content;
-  } else {
-    div.className = 'mr-4 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-200 agent-msg-prose leading-relaxed';
-    div.innerHTML = renderSimpleMarkdown(content) + (meta ? `<div class="mt-2 pt-1.5 border-t border-slate-800 text-[10px] font-mono text-slate-500">${escapeHtml(meta)}</div>` : '');
+  if (prompt === 'Open NLP Research Lab') {
+    switchTab('research');
+    appendCoachMessage('Opened the **NLP Research Lab**! Explore our 5-fold CV fold plot, interactive 6×6 Confusion Matrix, and Learned Token Coefficients.', [], []);
+    return;
   }
-  box.appendChild(div);
+  $('agent-input').value = prompt;
+  submitAgentChat(new Event('submit'));
+}
+
+function appendCoachMessage(markdownText, actions = [], quickReplies = [], meta = '') {
+  const box = $('agent-messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'mr-4 p-3 rounded-2xl bg-white border border-purple-100 text-slate-800 shadow-sm space-y-2 agent-msg-prose';
+  wrap.innerHTML = renderSimpleMarkdown(markdownText);
+
+  if (actions?.length) {
+    const actRow = document.createElement('div');
+    actRow.className = 'flex flex-wrap gap-1.5 pt-1';
+    actions.forEach(a => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'px-2.5 py-1 rounded-lg bg-violet-700 hover:bg-violet-800 text-white text-[11px] font-bold';
+      btn.textContent = a.label;
+      btn.onclick = () => {
+        if (a.fill_text) {
+          switchTab('studio');
+          $('textInput').value = a.fill_text;
+          $('charCount').textContent = a.fill_text.length;
+          $('predictForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+      };
+      actRow.appendChild(btn);
+    });
+    wrap.appendChild(actRow);
+  }
+
+  if (quickReplies?.length) {
+    const qrRow = document.createElement('div');
+    qrRow.className = 'flex flex-wrap gap-1.5 pt-1';
+    quickReplies.forEach(q => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'px-2.5 py-1 rounded-full bg-purple-50 hover:bg-purple-100 border border-purple-200 text-violet-900 text-[11px] font-semibold';
+      btn.textContent = q;
+      btn.onclick = () => askCoachTopic(q);
+      qrRow.appendChild(btn);
+    });
+    wrap.appendChild(qrRow);
+  }
+
+  if (meta) {
+    const m = document.createElement('div');
+    m.className = 'text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-100';
+    m.textContent = meta;
+    wrap.appendChild(m);
+  }
+
+  box.appendChild(wrap);
   box.scrollTop = box.scrollHeight;
-  return div;
+  return wrap;
 }
 
 async function submitAgentChat(e) {
@@ -556,9 +483,15 @@ async function submitAgentChat(e) {
   const msg = input.value.trim();
   if (!msg) return;
   input.value = '';
-  appendAgentMsg('user', msg);
-  const thinking = appendAgentMsg('assistant', 'Inspecting NLP features and formulating response...');
 
+  const box = $('agent-messages');
+  const uDiv = document.createElement('div');
+  uDiv.className = 'ml-8 p-2.5 rounded-2xl bg-violet-700 text-white font-medium shadow-sm';
+  uDiv.textContent = msg;
+  box.appendChild(uDiv);
+  box.scrollTop = box.scrollHeight;
+
+  const thinking = appendCoachMessage('Thinking...');
   const provider = sessionStorage.getItem('emotisense_agent_provider') || 'gemini';
   const apiKey = sessionStorage.getItem('emotisense_agent_apikey') || '';
 
@@ -568,10 +501,7 @@ async function submitAgentChat(e) {
   try {
     const res = await fetch('/api/agent/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { 'X-LLM-API-Key': apiKey } : {}),
-      },
+      headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'X-LLM-API-Key': apiKey } : {}) },
       body: JSON.stringify({
         message: msg,
         provider,
@@ -585,46 +515,42 @@ async function submitAgentChat(e) {
     const data = await res.json();
     thinking.remove();
 
-    if (!res.ok) {
-      const btn = data.setup_required
-        ? `<button onclick="openAgentSettings()" class="px-2.5 py-1 rounded-lg bg-pink-600 text-white text-[11px] font-bold">Configure API Key</button>`
-        : '';
-      appendAgentMsg('error', `<div>${escapeHtml(data.error || 'Agent error.')}</div>${btn}`);
-      return;
-    }
-
     if (data.interaction_id) previousInteractionId = data.interaction_id;
     agentHistory.push({ role: 'user', content: msg });
-    agentHistory.push({ role: 'assistant', content: data.reply });
-    appendAgentMsg('assistant', data.reply, `${data.provider} · ${data.model}`);
+    agentHistory.push({ role: 'assistant', content: data.reply || data.error });
+    appendCoachMessage(data.reply || data.error, data.actions || [], data.quick_replies || [], data.model || '');
   } catch (err) {
     thinking.remove();
-    appendAgentMsg('error', `Network error: ${escapeHtml(err.message)}`);
+    appendCoachMessage(`Network issue: ${escapeHtml(err.message)}`);
   }
 }
 
-/* ---------------- Utilities ---------------- */
-function capitalise(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
-function escapeHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/* ---------------- Settings & Utilities ---------------- */
+function openAgentSettings() { $('agent-settings-modal').classList.replace('hidden', 'flex'); }
+function closeAgentSettings() { $('agent-settings-modal').classList.replace('flex', 'hidden'); }
+function loadSavedAgentSettings() {
+  $('agent-provider-select').value = sessionStorage.getItem('emotisense_agent_provider') || 'gemini';
+  $('agent-apikey-input').value = sessionStorage.getItem('emotisense_agent_apikey') || '';
 }
+function saveAgentSettings() {
+  sessionStorage.setItem('emotisense_agent_provider', $('agent-provider-select').value);
+  const k = $('agent-apikey-input').value.trim();
+  if (k) sessionStorage.setItem('emotisense_agent_apikey', k); else sessionStorage.removeItem('emotisense_agent_apikey');
+  closeAgentSettings();
+  checkHealth();
+}
+function clearAgentKey() { sessionStorage.removeItem('emotisense_agent_apikey'); $('agent-apikey-input').value = ''; checkHealth(); }
 
+function capitalise(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function renderSimpleMarkdown(md) {
-  let safe = escapeHtml(md);
-  safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+  let safe = escapeHtml(md).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
   const lines = safe.split('\n');
-  let out = '';
-  let inList = false;
+  let out = '', inList = false;
   for (const line of lines) {
     const t = line.trim();
-    if (t.startsWith('- ') || t.startsWith('* ')) {
-      if (!inList) { out += '<ul>'; inList = true; }
-      out += `<li>${t.slice(2)}</li>`;
-    } else {
-      if (inList) { out += '</ul>'; inList = false; }
-      if (t) out += `<p>${t}</p>`;
-    }
+    if (t.startsWith('- ') || t.startsWith('* ')) { if (!inList) { out += '<ul>'; inList = true; } out += `<li>${t.slice(2)}</li>`; }
+    else { if (inList) { out += '</ul>'; inList = false; } if (t) out += `<p>${t}</p>`; }
   }
   if (inList) out += '</ul>';
   return out;

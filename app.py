@@ -1,16 +1,15 @@
 """
 app.py
 ------
-Production Flask backend for EmotiSense AI v2.0.
-Aligned with Emotion_Heart_Validation.ipynb (scikit-learn 1.8.0):
-  - Primary CV & Test Winner: BoW + Logistic Regression (87.95% CV / 89.84% Test / 0.8591 Macro F1)
-  - Secondary Linear Model: TF-IDF + Logistic Regression (82.97% CV / 84.97% Test / 0.7768 Macro F1)
-  - Naive Bayes Baselines: BoW + MultinomialNB (74.50% Test), TF-IDF + MultinomialNB (62.80% Test)
-  - Preserves stopwords and negation tokens (no NLTK dependency)
-  - Uses dynamic string labels directly from estimator.classes_ (zero LabelEncoder mismatch)
-  - Token-level Explainable AI (positive + opposing token contributions + sentence heatmap)
-  - Batch Journal / CSV Automation screening & CSV export
-  - Interactive 1-on-1 Pure LLM EmotiAgent AI (Gemini Interactions API / OpenAI)
+Production Flask backend for EmotiSense AI v2.1.
+Features:
+  - 4 validated sklearn 1.8.0 pipelines (BoW+LR 89.84% Winner, TF-IDF+LR 84.97%, BoW+MNB, TF-IDF+MNB)
+  - Dynamic string label handling via estimator.classes_ + stopword/negation retention
+  - Token-level XAI + inline sentence heatmap + top learned vocabulary explorer
+  - Batch Journal / CSV Automation
+  - Interactive 1-on-1 EmotiCoach AI:
+      * Live Gemini (gemini-4-hydrogen) / OpenAI LLM when key is configured
+      * Built-in Guided Emotion & NLP Explainer (works 100% out-of-the-box with clickable prompts!)
 """
 
 import csv
@@ -40,94 +39,68 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 APP_START_TIME = time.time()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
 EMOTION_META = {
-    "anger": {"emoji": "😠", "color": "#ef4444"},
-    "fear": {"emoji": "😨", "color": "#a855f7"},
-    "joy": {"emoji": "😄", "color": "#eab308"},
-    "love": {"emoji": "❤️", "color": "#ec4899"},
-    "sadness": {"emoji": "😢", "color": "#3b82f6"},
-    "surprise": {"emoji": "😲", "color": "#14b8a6"},
+    "anger": {"emoji": "😠", "color": "#dc2626"},
+    "fear": {"emoji": "😨", "color": "#7c3aed"},
+    "joy": {"emoji": "😄", "color": "#d97706"},
+    "love": {"emoji": "❤️", "color": "#db2777"},
+    "sadness": {"emoji": "😢", "color": "#2563eb"},
+    "surprise": {"emoji": "😲", "color": "#0d9488"},
 }
 
 MODEL_REGISTRY = {
-    "bow_lr": {
-        "name": "BoW + Logistic Regression",
-        "model_file": "bow_model.pkl",
-        "vec_file": "bow_vectorizer.pkl",
-        "badge": "CV & Test Winner",
-    },
-    "tfidf_lr": {
-        "name": "TF-IDF + Logistic Regression",
-        "model_file": "model.pkl",
-        "vec_file": "vectorizer.pkl",
-        "badge": "Normalized Linear",
-    },
-    "bow_nb": {
-        "name": "BoW + Multinomial NB",
-        "model_file": "nb_bow_model.pkl",
-        "vec_file": "nb_bow_vectorizer.pkl",
-        "badge": "Probabilistic Baseline",
-    },
-    "tfidf_nb": {
-        "name": "TF-IDF + Multinomial NB",
-        "model_file": "nb_tfidf_model.pkl",
-        "vec_file": "nb_tfidf_vectorizer.pkl",
-        "badge": "TF-IDF Baseline",
-    },
+    "bow_lr": {"name": "BoW + Logistic Regression", "model_file": "bow_model.pkl", "vec_file": "bow_vectorizer.pkl", "badge": "CV & Test Winner"},
+    "tfidf_lr": {"name": "TF-IDF + Logistic Regression", "model_file": "model.pkl", "vec_file": "vectorizer.pkl", "badge": "Normalized Linear"},
+    "bow_nb": {"name": "BoW + Multinomial NB", "model_file": "nb_bow_model.pkl", "vec_file": "nb_bow_vectorizer.pkl", "badge": "Probabilistic Baseline"},
+    "tfidf_nb": {"name": "TF-IDF + Multinomial NB", "model_file": "nb_tfidf_model.pkl", "vec_file": "nb_tfidf_vectorizer.pkl", "badge": "TF-IDF Baseline"},
 }
 
 loaded_models = {}
 metrics_cache = {}
 
-try:
-    with open(os.path.join(BASE_DIR, "emotion_metrics.json"), "r", encoding="utf-8") as f:
-        metrics_cache = json.load(f)
-except Exception as exc:
-    logger.warning("Could not load emotion_metrics.json: %s", exc)
 
-for key, cfg in MODEL_REGISTRY.items():
-    m_path = os.path.join(BASE_DIR, cfg["model_file"])
-    v_path = os.path.join(BASE_DIR, cfg["vec_file"])
-    if os.path.exists(m_path) and os.path.exists(v_path):
-        try:
-            clf = joblib.load(m_path)
-            vec = joblib.load(v_path)
-            feat_names = vec.get_feature_names_out()
-            feat_to_idx = {name: idx for idx, name in enumerate(feat_names)}
-            bench = next((b for b in metrics_cache.get("benchmarks", []) if b["key"] == key), {})
-            loaded_models[key] = {
-                "key": key,
-                "name": cfg["name"],
-                "badge": cfg["badge"],
-                "model": clf,
-                "vectorizer": vec,
-                "classes": [str(c) for c in clf.classes_],
-                "feat_to_idx": feat_to_idx,
-                "cv_accuracy": bench.get("cv_accuracy"),
-                "test_accuracy": bench.get("test_accuracy"),
-                "macro_f1": bench.get("macro_f1"),
-            }
-            logger.info("Loaded %s (%d vocab features)", cfg["name"], len(feat_to_idx))
-        except Exception as exc:
-            logger.error("Failed loading %s: %s", key, exc)
+def load_assets():
+    global metrics_cache
+    try:
+        with open(os.path.join(BASE_DIR, "emotion_metrics.json"), "r", encoding="utf-8") as f:
+            metrics_cache = json.load(f)
+    except Exception as exc:
+        logger.warning("Could not load emotion_metrics.json: %s", exc)
 
-if "bow_lr" not in loaded_models:
-    logger.critical("Primary bow_lr model failed to load.")
+    for key, cfg in MODEL_REGISTRY.items():
+        m_path = os.path.join(BASE_DIR, cfg["model_file"])
+        v_path = os.path.join(BASE_DIR, cfg["vec_file"])
+        if os.path.exists(m_path) and os.path.exists(v_path):
+            try:
+                clf = joblib.load(m_path)
+                vec = joblib.load(v_path)
+                feat_names = vec.get_feature_names_out()
+                feat_to_idx = {name: idx for idx, name in enumerate(feat_names)}
+                bench = next((b for b in metrics_cache.get("benchmarks", []) if b["key"] == key), {})
+                loaded_models[key] = {
+                    "key": key,
+                    "name": cfg["name"],
+                    "badge": cfg["badge"],
+                    "model": clf,
+                    "vectorizer": vec,
+                    "classes": [str(c) for c in clf.classes_],
+                    "feat_to_idx": feat_to_idx,
+                    "cv_accuracy": bench.get("cv_accuracy"),
+                    "test_accuracy": bench.get("test_accuracy"),
+                    "macro_f1": bench.get("macro_f1"),
+                }
+            except Exception as exc:
+                logger.error("Failed loading %s: %s", key, exc)
 
 
-# ---------------------------------------------------------------------------
-# Explainable AI & Multi-Model Inference
-# ---------------------------------------------------------------------------
+load_assets()
+
 
 def _token_score_map(bundle, X_vec, clean_text, pred_idx):
     clf = bundle["model"]
@@ -162,18 +135,10 @@ def _token_score_map(bundle, X_vec, clean_text, pred_idx):
 
     positive = sorted([v for v in word_scores.values() if v["score"] > 0], key=lambda x: x["score"], reverse=True)
     opposing = sorted([v for v in word_scores.values() if v["score"] < 0], key=lambda x: x["score"])
-
-    sentence_tokens = []
-    for w in words:
-        info = word_scores.get(w)
-        sentence_tokens.append(
-            {
-                "word": w,
-                "score": info["score"] if info else 0.0,
-                "impact": info["impact"] if info else "oov",
-            }
-        )
-
+    sentence_tokens = [
+        {"word": w, "score": word_scores[w]["score"] if w in word_scores else 0.0, "impact": word_scores[w]["impact"] if w in word_scores else "oov"}
+        for w in words
+    ]
     return positive[:10], opposing[:6], sentence_tokens
 
 
@@ -194,7 +159,7 @@ def predict_emotion(text: str, primary_key: str = "bow_lr", compare_models: bool
 
     clean = preprocess(text)
     if not clean:
-        raise ValueError("Input contains no recognizable alphabetical words after normalization.")
+        raise ValueError("Please include recognizable alphabetical words so our NLP model can read it.")
 
     primary_bundle = loaded_models[primary_key]
     X_vec, pred_idx, emotion, confidence, all_probs = _infer_single_bundle(primary_bundle, clean)
@@ -203,8 +168,8 @@ def predict_emotion(text: str, primary_key: str = "bow_lr", compare_models: bool
     sorted_probs = sorted(all_probs.items(), key=lambda kv: kv[1], reverse=True)
     runner_up = sorted_probs[1] if len(sorted_probs) > 1 else (emotion, 0.0)
     margin_pct = round(confidence - runner_up[1], 2)
+    meta = EMOTION_META.get(emotion, {"emoji": "🤖", "color": "#7c3aed"})
 
-    meta = EMOTION_META.get(emotion, {"emoji": "🤖", "color": "#6366f1"})
     result = {
         "emotion": emotion,
         "emoji": meta["emoji"],
@@ -232,7 +197,7 @@ def predict_emotion(text: str, primary_key: str = "bow_lr", compare_models: bool
             if not b:
                 continue
             _, _, m_emo, m_conf, m_probs = _infer_single_bundle(b, clean)
-            m_meta = EMOTION_META.get(m_emo, {"emoji": "🤖", "color": "#6366f1"})
+            m_meta = EMOTION_META.get(m_emo, {"emoji": "🤖", "color": "#7c3aed"})
             votes[m_emo] += 1
             arena.append(
                 {
@@ -248,35 +213,19 @@ def predict_emotion(text: str, primary_key: str = "bow_lr", compare_models: bool
                     "all_probabilities": m_probs,
                 }
             )
-
         top_vote_emo, top_vote_cnt = votes.most_common(1)[0]
-        total_models = len(arena)
         result["arena"] = {
             "models": arena,
             "consensus_emotion": top_vote_emo,
             "consensus_count": top_vote_cnt,
-            "total_models": total_models,
-            "unanimous": top_vote_cnt == total_models,
+            "total_models": len(arena),
+            "unanimous": top_vote_cnt == len(arena),
         }
-
-        # Backward-compatible comparison field for existing API consumers
-        tfidf_row = next((a for a in arena if a["key"] == "tfidf_lr"), None)
-        bow_row = next((a for a in arena if a["key"] == "bow_lr"), None)
-        if tfidf_row and bow_row:
-            result["comparison"] = {
-                "agree": bow_row["emotion"] == tfidf_row["emotion"],
-                "bow_emotion": bow_row["emotion"],
-                "bow_confidence": bow_row["confidence"],
-                "tfidf_emotion": tfidf_row["emotion"],
-                "tfidf_confidence": tfidf_row["confidence"],
-                "confidence_diff": round(abs(bow_row["confidence"] - tfidf_row["confidence"]), 2),
-            }
-
     return result
 
 
 # ---------------------------------------------------------------------------
-# Pure LLM 1-on-1 EmotiAgent AI Helper
+# Interactive EmotiCoach AI (Gemini/OpenAI LLM + Built-in NLP Concierge)
 # ---------------------------------------------------------------------------
 
 def _extract_gemini_text(payload):
@@ -292,89 +241,64 @@ def _extract_gemini_text(payload):
         return "\n".join(texts).strip()
     if payload.get("output_text"):
         return str(payload["output_text"]).strip()
-    for out in payload.get("outputs") or []:
-        if isinstance(out, dict) and out.get("text"):
-            texts.append(out["text"])
-    return "\n".join(texts).strip()
+    return ""
 
 
 def call_llm_provider(provider, api_key, system_prompt, user_message, history, previous_interaction_id=None):
     provider = (provider or "").lower().strip()
-
     if provider == "gemini":
         model_name = os.environ.get("GEMINI_MODEL", "gemini-4-hydrogen")
-        headers = {
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
-            "Api-Revision": "2026-05-20",
-        }
+        headers = {"Content-Type": "application/json", "x-goog-api-key": api_key, "Api-Revision": "2026-05-20"}
         url = "https://generativelanguage.googleapis.com/v1/interactions"
 
-        def _post_interaction(input_val, prev_id=None):
-            body = {
-                "model": model_name,
-                "system_instruction": system_prompt,
-                "input": input_val,
-            }
+        def _post(inp, prev_id=None):
+            body = {"model": model_name, "system_instruction": system_prompt, "input": inp}
             if prev_id:
                 body["previous_interaction_id"] = prev_id
             return requests.post(url, headers=headers, json=body, timeout=45)
 
         if previous_interaction_id:
-            resp = _post_interaction(user_message, prev_id=previous_interaction_id)
-            if resp.status_code in (400, 404):
-                previous_interaction_id = None
-            elif not resp.ok:
-                raise RuntimeError(f"Gemini API error ({resp.status_code}): {resp.text[:400]}")
-            else:
+            resp = _post(user_message, prev_id=previous_interaction_id)
+            if resp.ok:
                 data = resp.json()
-                text = _extract_gemini_text(data)
-                if not text:
-                    raise RuntimeError("Gemini returned an empty response.")
-                return text, data.get("id"), model_name
+                txt = _extract_gemini_text(data)
+                if txt:
+                    return txt, data.get("id"), model_name
+            elif resp.status_code not in (400, 404):
+                raise RuntimeError(f"Gemini error ({resp.status_code}): {resp.text[:300]}")
 
-        if history:
-            transcript = "\n".join(
-                f"{'User' if m.get('role') == 'user' else 'Assistant'}: {m.get('content', '')}"
-                for m in history[-8:]
-            )
-            full_input = f"Recent conversation:\n{transcript}\n\nUser: {user_message}"
-        else:
-            full_input = user_message
-
-        resp = _post_interaction(full_input)
+        transcript = "\n".join(
+            f"{'User' if m.get('role') == 'user' else 'Assistant'}: {m.get('content', '')}"
+            for m in (history or [])[-8:]
+        )
+        full_inp = f"Recent conversation:\n{transcript}\n\nUser: {user_message}" if transcript else user_message
+        resp = _post(full_inp)
         if not resp.ok:
-            raise RuntimeError(f"Gemini API error ({resp.status_code}): {resp.text[:400]}")
+            raise RuntimeError(f"Gemini error ({resp.status_code}): {resp.text[:300]}")
         data = resp.json()
-        text = _extract_gemini_text(data)
-        if not text:
-            raise RuntimeError("Gemini returned an empty response.")
-        return text, data.get("id"), model_name
+        txt = _extract_gemini_text(data)
+        if not txt:
+            raise RuntimeError("Gemini returned empty text.")
+        return txt, data.get("id"), model_name
 
     if provider == "openai":
         model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
         messages = [{"role": "system", "content": system_prompt}]
         for m in (history or [])[-10:]:
-            role = "assistant" if m.get("role") == "assistant" else "user"
-            messages.append({"role": role, "content": str(m.get("content", ""))})
+            messages.append({"role": "assistant" if m.get("role") == "assistant" else "user", "content": str(m.get("content", ""))})
         messages.append({"role": "user", "content": user_message})
-
         resp = requests.post(
             "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
-            },
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
             json={"model": model_name, "messages": messages},
             timeout=45,
         )
         if not resp.ok:
-            raise RuntimeError(f"OpenAI API error ({resp.status_code}): {resp.text[:400]}")
+            raise RuntimeError(f"OpenAI error ({resp.status_code}): {resp.text[:300]}")
         data = resp.json()
-        text = data["choices"][0]["message"]["content"].strip()
-        return text, None, model_name
+        return data["choices"][0]["message"]["content"].strip(), None, model_name
 
-    raise ValueError(f"Unsupported LLM provider: {provider}")
+    raise ValueError(f"Unsupported provider: {provider}")
 
 
 def resolve_llm_credentials(req_data):
@@ -382,7 +306,6 @@ def resolve_llm_credentials(req_data):
     session_key = (request.headers.get("X-LLM-API-Key") or req_data.get("api_key") or "").strip()
     env_gemini = os.environ.get("GEMINI_API_KEY", "").strip()
     env_openai = os.environ.get("OPENAI_API_KEY", "").strip()
-
     if req_provider == "openai":
         return "openai", (session_key or env_openai)
     if req_provider == "gemini":
@@ -396,19 +319,72 @@ def resolve_llm_credentials(req_data):
     return "gemini", ""
 
 
-def _build_emotion_system_prompt(analysis_snapshot, session_summary):
-    return (
-        "You are EmotiAgent AI, the interactive 1-on-1 NLP and emotional intelligence companion inside EmotiSense AI v2.\n"
-        "Capabilities & Grounding:\n"
-        "- The EmotiSense v2 pipeline runs on 15,939 deduplicated, conflict-cleaned sentences across 6 emotions "
-        "(anger, fear, joy, love, sadness, surprise) while preserving negation and stopwords.\n"
-        "- Primary model: BoW + Logistic Regression (87.95% 5-fold CV / 89.84% held-out test / 0.8591 macro F1).\n"
-        "- Arena models: TF-IDF + LR (84.97% test), BoW + MultinomialNB (74.50% test), TF-IDF + MultinomialNB (62.80% test).\n"
-        "- Be empathetic, insightful, and concrete: cite the exact trigger tokens, model consensus/divergence, and probabilities shown below.\n"
-        "- Help users explore why negation/word weights influenced the prediction, reframe or rewrite their text for a target tone, or reflect constructively.\n\n"
-        f"LIVE ANALYZED TEXT & NLP TELEMETRY:\n{json.dumps(analysis_snapshot, indent=2)}\n\n"
-        f"RECENT SESSION / BATCH MOOD CONTEXT:\n{json.dumps(session_summary, indent=2)}"
-    )
+def guided_emotion_coach_reply(message, analysis_snapshot):
+    q = message.lower()
+    actions = []
+    quick_replies = []
+
+    if any(w in q for w in ["what to write", "example", "not sure", "help me start", "new", "mood", "stuck", "feel"]):
+        reply = (
+            "**Not sure what to type? Pick what matches your mood right now** and I'll load a natural prompt into the analyzer so you can see how the AI reads tone & trigger words:"
+        )
+        actions = [
+            {"label": "Overwhelmed / Stressed", "fill_text": "I feel overwhelmed with deadlines today and slightly worried about getting everything done."},
+            {"label": "Grateful / Happy", "fill_text": "I feel genuinely relieved and happy about how smoothly things went today!"},
+            {"label": "Frustrated / Annoyed", "fill_text": "I am really frustrated because nobody listened to my concern during the meeting."},
+            {"label": "Test Negation ('Not Angry')", "fill_text": "I did not feel angry or humiliated at all; I felt calm and appreciative."},
+        ]
+    elif any(w in q for w in ["explain", "why", "trigger", "word", "bow", "tfidf", "tf-idf", "model", "negation"]):
+        if analysis_snapshot and "emotion" in analysis_snapshot:
+            emo = analysis_snapshot["emotion"]
+            conf = analysis_snapshot["confidence"]
+            toks = analysis_snapshot.get("token_importance", [])[:4]
+            tok_txt = ", ".join(f"`{t['word']}` (`+{t['score']}`)" for t in toks) if toks else "overall word balance"
+            arena = analysis_snapshot.get("arena") or {}
+            agree_txt = f"{arena.get('consensus_count', 1)}/{arena.get('total_models', 4)} models agree on **{emo}**" if arena else ""
+            reply = (
+                f"**Why EmotiSense predicted {emo.title()} ({conf}%):**\n"
+                f"- **Key Trigger Words:** {tok_txt}\n"
+                f"- **Model Consensus:** {agree_txt}\n"
+                f"- **Why BoW+LR (`89.84%`) is Primary:** Bag-of-Words preserves exact word frequency and negation pairs (`not`, `never`, `didnt`) instead of down-weighting common emotional anchors like TF-IDF sometimes does."
+            )
+            quick_replies = ["Reframe this message gently", "Try a negation test sentence"]
+        else:
+            reply = (
+                "**How Our 4 NLP Models Work:**\n"
+                "- **BoW + Logistic Regression (89.84% Winner):** Counts exact word presence including negations (`not`, `never`) and weights each word.\n"
+                "- **TF-IDF + Logistic Regression (84.97%):** Scales down very frequent words; great for longer essays.\n\n"
+                "Type any sentence on the left and click **Analyse Emotion** to inspect its word-by-word heatmap!"
+            )
+            actions = [
+                {"label": "Try Sample Sentence", "fill_text": "I feel so grateful and excited about what we built together!"}
+            ]
+    elif any(w in q for w in ["reframe", "rewrite", "calm", "polite", "constructive"]):
+        if analysis_snapshot and "emotion" in analysis_snapshot:
+            emo = analysis_snapshot["emotion"]
+            reply = (
+                f"Your text currently carries strong **{emo}** signals ({analysis_snapshot['confidence']}%).\n"
+                "**Quick Constructive Reframe Template:**\n"
+                "- Acknowledge the feeling cleanly (*\"I noticed I felt frustrated when...\"*)\n"
+                "- State the desired outcome calmly (*\"Going forward, it would help me if we could...\"*)\n\n"
+                "Connect a **Gemini API Key** in Settings (`🔑`) anytime to let **Gemini 4 Hydrogen** generate custom word-for-word rewrites!"
+            )
+            actions = [
+                {"label": "Test Calm Reframe Example", "fill_text": "I felt concerned about the timeline earlier, and I appreciate working together to keep things on track."}
+            ]
+        else:
+            reply = "Analyze a sentence first, then ask me to help reframe its emotional tone!"
+    else:
+        reply = (
+            "Hi! I'm **EmotiCoach AI**. I can help you test sentences, explain why certain words triggered **Joy / Sadness / Anger / Fear / Love / Surprise**, compare **BoW vs TF-IDF**, or help you articulate how you're feeling.\n\nWhat would you like to explore?"
+        )
+        quick_replies = [
+            "Not sure what to write — give examples",
+            "Explain why BoW beat TF-IDF",
+            "Explain the current prediction",
+        ]
+
+    return reply, actions, quick_replies
 
 
 # ---------------------------------------------------------------------------
@@ -431,18 +407,13 @@ def health():
             {
                 "status": "healthy" if primary is not None else "degraded",
                 "service": "EmotiSense AI",
-                "version": "2.0.0",
+                "version": "2.1.0",
                 "sklearn_version": sklearn.__version__,
                 "primary_model": primary["name"] if primary else None,
                 "loaded_models": list(loaded_models.keys()),
                 "classes": primary["classes"] if primary else list(EMOTION_META.keys()),
                 "vocab_size": len(primary["feat_to_idx"]) if primary else 0,
-                "llm_agent": {
-                    "configured": env_gemini or env_openai,
-                    "gemini_configured": env_gemini,
-                    "openai_configured": env_openai,
-                    "default_gemini_model": os.environ.get("GEMINI_MODEL", "gemini-4-hydrogen"),
-                },
+                "llm_agent": {"configured": env_gemini or env_openai, "guided_nlp_ready": True},
                 "uptime_seconds": round(time.time() - APP_START_TIME, 1),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
@@ -464,12 +435,7 @@ def sitemap_xml():
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        "  <url>\n"
-        f"    <loc>{base}/</loc>\n"
-        f"    <lastmod>{today}</lastmod>\n"
-        "    <changefreq>weekly</changefreq>\n"
-        "    <priority>1.0</priority>\n"
-        "  </url>\n"
+        f"  <url><loc>{base}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>\n"
         "</urlset>\n"
     )
     return Response(xml, mimetype="application/xml")
@@ -477,14 +443,7 @@ def sitemap_xml():
 
 @app.route("/api/emotions", methods=["GET"])
 def list_emotions():
-    return jsonify(
-        {
-            "emotions": [
-                {"label": lbl, "emoji": meta["emoji"], "color": meta["color"]}
-                for lbl, meta in EMOTION_META.items()
-            ]
-        }
-    )
+    return jsonify({"emotions": [{"label": lbl, "emoji": meta["emoji"], "color": meta["color"]} for lbl, meta in EMOTION_META.items()]})
 
 
 @app.route("/api/benchmarks", methods=["GET"])
@@ -497,25 +456,18 @@ def get_benchmarks():
 def predict():
     if not loaded_models:
         return jsonify({"error": "No ML models loaded."}), 500
-
-    if request.is_json:
-        data = request.get_json(silent=True) or {}
-        text = str(data.get("text", "")).strip()
-        model_key = str(data.get("model", "bow_lr")).strip()
-        compare_models = bool(data.get("compare_models", True))
-    else:
-        text = str(request.form.get("text", "")).strip()
-        model_key = str(request.form.get("model", "bow_lr")).strip()
-        compare_models = request.form.get("compare_models", "true").lower() in ("true", "1", "yes", "on")
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text", "")).strip()
+    model_key = str(data.get("model", "bow_lr")).strip()
+    compare_models = bool(data.get("compare_models", True))
 
     if not text:
-        return jsonify({"error": "Please enter a sentence or paragraph to analyse."}), 400
+        return jsonify({"error": "Please enter a sentence or reflection to analyze."}), 400
     if len(text) > 3000:
         return jsonify({"error": "Text is too long (max 3000 characters)."}), 400
 
     try:
-        result = predict_emotion(text, primary_key=model_key, compare_models=compare_models)
-        return jsonify(result)
+        return jsonify(predict_emotion(text, primary_key=model_key, compare_models=compare_models))
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
     except Exception as exc:
@@ -528,7 +480,7 @@ def batch_predict():
     bow_bundle = loaded_models.get("bow_lr")
     tfidf_bundle = loaded_models.get("tfidf_lr")
     if not bow_bundle:
-        return jsonify({"error": "Primary BoW model is not loaded."}), 500
+        return jsonify({"error": "Primary BoW model not loaded."}), 500
 
     try:
         entries = []
@@ -539,16 +491,10 @@ def batch_predict():
             if fname.endswith(".csv"):
                 reader = csv.DictReader(io.StringIO(raw_bytes))
                 fieldnames = [f.strip() for f in (reader.fieldnames or [])]
-                text_col = next(
-                    (c for c in fieldnames if c.lower() in ("text", "sentence", "message", "content", "entry")),
-                    fieldnames[0] if fieldnames else None,
-                )
+                text_col = next((c for c in fieldnames if c.lower() in ("text", "sentence", "message", "content", "entry")), fieldnames[0] if fieldnames else None)
                 if not text_col:
-                    return jsonify({"error": "CSV appears empty or lacks a text column."}), 400
-                for row in reader:
-                    val = str(row.get(text_col, "")).strip()
-                    if val:
-                        entries.append(val)
+                    return jsonify({"error": "CSV lacks a text column."}), 400
+                entries = [str(row.get(text_col, "")).strip() for row in reader if str(row.get(text_col, "")).strip()]
             else:
                 entries = [line.strip() for line in raw_bytes.splitlines() if line.strip()]
         else:
@@ -559,24 +505,20 @@ def batch_predict():
                 entries = [line.strip() for line in str(payload["raw_text"]).splitlines() if line.strip()]
 
         if not entries:
-            return jsonify({"error": "Provide at least one non-empty line, .txt, or .csv file."}), 400
+            return jsonify({"error": "Please provide at least one line, .txt, or .csv file."}), 400
 
         entries = entries[:2000]
-        cleaned = [preprocess(t) for t in entries]
-        valid_pairs = [(orig, cln) for orig, cln in zip(entries, cleaned) if cln]
+        valid_pairs = [(t, preprocess(t)) for t in entries if preprocess(t)]
         if not valid_pairs:
-            return jsonify({"error": "No valid alphabetical sentences found after cleaning."}), 400
+            return jsonify({"error": "No valid alphabetical sentences found."}), 400
 
-        orig_texts = [p[0] for p in valid_pairs]
         clean_texts = [p[1] for p in valid_pairs]
-
         X_bow = bow_bundle["vectorizer"].transform(clean_texts)
         bow_probs = bow_bundle["model"].predict_proba(X_bow)
         bow_classes = bow_bundle["classes"]
         bow_preds = np.argmax(bow_probs, axis=1)
 
-        tfidf_preds = None
-        tfidf_probs = None
+        tfidf_probs = tfidf_preds = None
         if tfidf_bundle:
             X_tf = tfidf_bundle["vectorizer"].transform(clean_texts)
             tfidf_probs = tfidf_bundle["model"].predict_proba(X_tf)
@@ -596,8 +538,7 @@ def batch_predict():
             conf_b = round(float(bow_probs[i, idx_b]) * 100.0, 1)
             dist_counts[emo_b] += 1
 
-            emo_t = emo_b
-            conf_t = conf_b
+            emo_t, conf_t = emo_b, conf_b
             if tfidf_preds is not None:
                 idx_t = int(tfidf_preds[i])
                 emo_t = tfidf_classes[idx_t]
@@ -605,20 +546,16 @@ def batch_predict():
             if emo_b == emo_t:
                 agree_cnt += 1
 
-            # Pick top trigger word for this sentence
-            top_word = ""
-            best_w = -999.0
+            top_word, best_w = "", -999.0
             for w in set(cln.split()):
                 fidx = feat_to_idx.get(w)
-                if fidx is not None:
-                    sc = float(coef_mat[idx_b, fidx])
-                    if sc > best_w:
-                        best_w = sc
-                        top_word = w
+                if fidx is not None and float(coef_mat[idx_b, fidx]) > best_w:
+                    best_w = float(coef_mat[idx_b, fidx])
+                    top_word = w
             if top_word and best_w > 0:
                 trigger_counter[top_word] += 1
 
-            meta = EMOTION_META.get(emo_b, {"emoji": "🤖", "color": "#6366f1"})
+            meta = EMOTION_META.get(emo_b, {"emoji": "🤖", "color": "#7c3aed"})
             rows.append(
                 {
                     "row_id": i + 1,
@@ -657,8 +594,7 @@ def batch_predict():
             }
         )
     except Exception as exc:
-        logger.error("Batch error: %s", exc, exc_info=True)
-        return jsonify({"error": f"Batch screening failed: {exc}"}), 400
+        return jsonify({"error": f"Batch failed: {exc}"}), 400
 
 
 @app.route("/api/agent/chat", methods=["POST"])
@@ -667,24 +603,6 @@ def agent_chat():
     message = str(data.get("message", "")).strip()
     if not message:
         return jsonify({"error": "Message cannot be empty."}), 400
-    if len(message) > 4000:
-        return jsonify({"error": "Message too long (max 4000 characters)."}), 400
-
-    provider, api_key = resolve_llm_credentials(data)
-    if not api_key:
-        return (
-            jsonify(
-                {
-                    "setup_required": True,
-                    "provider": provider,
-                    "error": (
-                        "No LLM API key configured. Set GEMINI_API_KEY or OPENAI_API_KEY in Render/Vercel "
-                        "environment variables (or .env), or enter a temporary session key in Agent Settings."
-                    ),
-                }
-            ),
-            503,
-        )
 
     current_text = str(data.get("current_text", "")).strip()
     model_key = str(data.get("model", "bow_lr")).strip()
@@ -692,36 +610,68 @@ def agent_chat():
     history = data.get("history") or []
     prev_id = data.get("previous_interaction_id")
 
-    analysis_snapshot = {"note": "No sentence analyzed yet."}
+    analysis_snapshot = {}
     if current_text and loaded_models:
         try:
             analysis_snapshot = predict_emotion(current_text, primary_key=model_key, compare_models=True)
-            # Keep system prompt concise by trimming redundant per-word list
             analysis_snapshot.pop("sentence_tokens", None)
         except Exception:
             pass
 
-    system_prompt = _build_emotion_system_prompt(analysis_snapshot, session_summary)
+    provider, api_key = resolve_llm_credentials(data)
+    if api_key:
+        system_prompt = (
+            "You are EmotiCoach AI, a warm, articulate 1-on-1 emotional reflection & NLP assistant inside EmotiSense AI v2.\n"
+            "Explain emotion predictions clearly in everyday language, reference exact trigger tokens and BoW vs TF-IDF comparisons, "
+            "and offer practical empathetic reframing.\n\n"
+            f"ANALYZED TEXT TELEMETRY:\n{json.dumps(analysis_snapshot, indent=2)}\n\n"
+            f"SESSION MOOD SUMMARY:\n{json.dumps(session_summary, indent=2)}"
+        )
+        try:
+            reply_text, interaction_id, model_used = call_llm_provider(
+                provider=provider,
+                api_key=api_key,
+                system_prompt=system_prompt,
+                user_message=message,
+                history=history,
+                previous_interaction_id=prev_id,
+            )
+            _, actions, quick_replies = guided_emotion_coach_reply(message, analysis_snapshot)
+            return jsonify(
+                {
+                    "reply": reply_text,
+                    "mode": "llm",
+                    "provider": provider,
+                    "model": model_used,
+                    "interaction_id": interaction_id,
+                    "actions": actions,
+                    "quick_replies": quick_replies,
+                }
+            )
+        except Exception as exc:
+            reply_text, actions, quick_replies = guided_emotion_coach_reply(message, analysis_snapshot)
+            return jsonify(
+                {
+                    "reply": f"{reply_text}\n\n_(External LLM returned `{exc}` — switched to built-in EmotiCoach guide.)_",
+                    "mode": "guided-nlp",
+                    "provider": "built-in",
+                    "model": "EmotiCoach Guided Engine",
+                    "actions": actions,
+                    "quick_replies": quick_replies,
+                }
+            )
 
-    try:
-        reply_text, interaction_id, model_used = call_llm_provider(
-            provider=provider,
-            api_key=api_key,
-            system_prompt=system_prompt,
-            user_message=message,
-            history=history,
-            previous_interaction_id=prev_id,
-        )
-        return jsonify(
-            {
-                "reply": reply_text,
-                "provider": provider,
-                "model": model_used,
-                "interaction_id": interaction_id,
-            }
-        )
-    except Exception as exc:
-        return jsonify({"error": str(exc), "provider": provider}), 502
+    reply_text, actions, quick_replies = guided_emotion_coach_reply(message, analysis_snapshot)
+    return jsonify(
+        {
+            "reply": reply_text,
+            "mode": "guided-nlp",
+            "provider": "built-in",
+            "model": "EmotiCoach Guided Engine (Add Gemini Key for Open Chat)",
+            "actions": actions,
+            "quick_replies": quick_replies,
+        }
+    )
 
 
 if __name__ == "__main__":
