@@ -31,6 +31,8 @@ let nudgedEmotion = false;
 let sessionChart = null;
 let batchChart = null;
 let benchFoldsChart = null;
+let ablationChart = null;
+let calibrationChart = null;
 
 const $ = id => document.getElementById(id);
 
@@ -112,6 +114,19 @@ async function executeUiCommands(commands) {
       if (cmd.emotion) $('vocabEmotionSelect').value = cmd.emotion;
       renderResearchLab();
       await sleep(150);
+    } else if (cmd.type === 'set_text_and_analyze' && cmd.text) {
+      if (cmd.model) $('modelSelect').value = cmd.model;
+      $('textInput').value = cmd.text;
+      $('charCount').textContent = cmd.text.length;
+      await runPredictionSubmit();
+      await sleep(160);
+    } else if (cmd.type === 'set_batch_and_run' && Array.isArray(cmd.lines)) {
+      $('batchTextArea').value = cmd.lines.join('\n');
+      await runPastedBatch();
+      await sleep(150);
+    } else if (cmd.type === 'run_ab_arena') {
+      await runLiveAbArena(cmd.text);
+      await sleep(150);
     }
   }
   if (ctxPill.textContent.includes('operating website')) ctxPill.textContent = prev;
@@ -128,7 +143,7 @@ async function checkHealth() {
     const data = await res.json();
     const serverOk = Boolean(data?.llm_agent?.configured);
     const hasSession = Boolean(sessionStorage.getItem('emotisense_agent_apikey'));
-    pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>BoW+LR Winner (89.84%) · ${Number(data.vocab_size || 0).toLocaleString()} tokens · sklearn ${data.sklearn_version}</span>`;
+    pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>${data.models_loaded?.length || 7} NLP Pipelines Ready (Word+Char+Syntax) · sklearn ${data.sklearn_version}</span>`;
 
     if (serverOk || hasSession) {
       badge.textContent = 'NLP LLM Active';
@@ -143,10 +158,23 @@ async function checkHealth() {
 }
 
 async function loadBenchmarks() {
-  try { const res = await fetch('/api/benchmarks'); benchmarksData = await res.json(); } catch (err) { console.error(err); }
+  try {
+    const res = await fetch('/api/benchmarks');
+    benchmarksData = await res.json();
+    if (!benchmarksData?.benchmarks?.length) return;
+    const champ = benchmarksData.benchmarks[0];
+    if ($('kpiCleanRows')) $('kpiCleanRows').textContent = Number(benchmarksData.dataset?.retained_rows || 15939).toLocaleString();
+    if ($('kpiChampTest')) $('kpiChampTest').textContent = `${(champ.test_accuracy * 100).toFixed(2)}%`;
+    if ($('kpiChampCv')) $('kpiChampCv').textContent = `${(champ.cv_accuracy * 100).toFixed(2)}%`;
+    if ($('resWinnerName')) $('resWinnerName').textContent = champ.model.replace('Hybrid Soft Ensemble (LR+SVC+CNB)', 'Hybrid Ensemble');
+    if ($('resWinnerMetrics')) $('resWinnerMetrics').textContent = `${(champ.cv_accuracy * 100).toFixed(2)}% CV · ${(champ.test_accuracy * 100).toFixed(2)}% Test`;
+    if ($('resMacroF1')) $('resMacroF1').textContent = `${champ.macro_f1.toFixed(4)} / ECE ${(champ.ece || 0).toFixed(4)}`;
+    if ($('resVocabDim')) $('resVocabDim').textContent = `${Number(champ.vocab_size || 0).toLocaleString()} Feats`;
+  } catch (err) { console.error(err); }
 }
 
 function switchTab(tab) {
+  clearTimeout(hesitationTimer);
   ['studio', 'research', 'batch'].forEach(id => {
     $(`tab-${id}`).classList.toggle('hidden', id !== tab);
     $(`tab-btn-${id}`).classList.toggle('active', id === tab);
@@ -211,11 +239,27 @@ function renderResult(data) {
   $('xaiPosChips').innerHTML = (data.token_importance || []).length ? data.token_importance.map(t => `<span class="token-pill token-pos">+${t.score.toFixed(2)} ${escapeHtml(t.word)}</span>`).join('') : '<span class="text-xs text-slate-400">None matched.</span>';
   $('xaiNegChips').innerHTML = (data.opposing_tokens || []).length ? data.opposing_tokens.map(t => `<span class="token-pill token-neg">${t.score.toFixed(2)} ${escapeHtml(t.word)}</span>`).join('') : '<span class="text-xs text-slate-400">None matched.</span>';
 
+  const ab = data.ab_live || {};
+  if ($('abControlVal') && ab.control && ab.variant) {
+    $('abControlVal').textContent = `${ab.control.emoji} ${capitalise(ab.control.emotion)} (${ab.control.confidence.toFixed(1)}%)`;
+    $('abVariantVal').textContent = `${ab.variant.emoji} ${capitalise(ab.variant.emotion)} (${ab.variant.confidence.toFixed(1)}%)`;
+  }
+  const syn = data.syntax_signals || {};
+  if ($('syntaxSignalsBox')) {
+    const chips = [];
+    if (syn.negations_found?.length) chips.push(`<span class="px-2 py-0.5 rounded bg-white border border-purple-200 font-semibold text-violet-800">Negations: ${escapeHtml(syn.negations_found.join(', '))}</span>`);
+    if (syn.pivot_cues?.length) chips.push(`<span class="px-2 py-0.5 rounded bg-white border border-purple-200 font-semibold text-amber-800">Pivots: ${escapeHtml(syn.pivot_cues.join(', '))}</span>`);
+    if (syn.negated_negative_cues?.length) chips.push(`<span class="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 font-semibold text-emerald-800">Flip Guard: ${escapeHtml(syn.negated_negative_cues.join(', '))}</span>`);
+    if (syn.intensifiers?.length) chips.push(`<span class="px-2 py-0.5 rounded bg-white border border-purple-200 text-pink-800">Intensifiers: ${escapeHtml(syn.intensifiers.join(', '))}</span>`);
+    chips.push(`<span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-mono">TTR ${syn.lexical_diversity ?? '--'} · ${syn.word_count ?? 0} tok</span>`);
+    $('syntaxSignalsBox').innerHTML = `<span class="font-mono text-violet-800 font-bold">Affective Syntax:</span> ${chips.join(' ')}`;
+  }
+
   if (data.arena) {
     $('arenaSection').classList.remove('hidden');
     const a = data.arena;
     $('arenaConsensusBadge').textContent = a.unanimous ? `Unanimous (${a.consensus_count}/${a.total_models} ${capitalise(a.consensus_emotion)})` : `Majority (${a.consensus_count}/${a.total_models} ${capitalise(a.consensus_emotion)})`;
-    $('arenaGrid').innerHTML = a.models.map(m => `<div class="soft-card p-3.5 rounded-xl flex items-center justify-between gap-2"><div><div class="text-xs font-bold text-slate-900">${escapeHtml(m.name)}</div><div class="text-[10px] font-mono text-slate-500">Test ${m.test_accuracy}%</div></div><div class="text-right"><div class="text-sm font-bold capitalize" style="color:${m.color}">${m.emoji} ${m.emotion}</div><div class="text-[11px] font-mono text-slate-600">${m.confidence.toFixed(1)}%</div></div></div>`).join('');
+    $('arenaGrid').innerHTML = a.models.map(m => `<div class="soft-card p-3.5 rounded-xl flex items-center justify-between gap-2"><div><div class="text-xs font-bold text-slate-900">${escapeHtml(m.name)}</div><div class="text-[10px] font-mono text-slate-500">Test ${m.test_accuracy ?? '--'}% · ${escapeHtml(m.badge || '')}</div></div><div class="text-right"><div class="text-sm font-bold capitalize" style="color:${m.color}">${m.emoji} ${m.emotion}</div><div class="text-[11px] font-mono text-slate-600">${m.confidence.toFixed(1)}%</div></div></div>`).join('');
   } else {
     $('arenaSection').classList.add('hidden');
   }
@@ -243,13 +287,126 @@ function renderSessionChart() {
   sessionChart = new Chart($('sessionChart'), { type: 'doughnut', data: { labels: Object.keys(counts).map(capitalise), datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => EMOTION_META[k].color), borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 11 } } } } } });
 }
 
-/* ---------------- NLP Research Lab ---------------- */
+/* ---------------- NLP Research & A/B Lab ---------------- */
+function renderAbStatsPanel() {
+  const box = $('abStatsPanel');
+  const pairKey = $('abPairSelect')?.value || 'bow_vs_hybrid_ensemble';
+  const ab = benchmarksData?.ab_tests?.[pairKey];
+  if (!box || !ab) return;
+  const mc = ab.mcnemar || {};
+  const bt = ab.bootstrap || {};
+  const c = mc.contingency || {};
+  box.innerHTML = `
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Acc Delta (95% CI)</div><div class="text-sm font-extrabold ${bt.accuracy_delta_pct?.mean >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${bt.accuracy_delta_pct?.mean >= 0 ? '+' : ''}${bt.accuracy_delta_pct?.mean}%</div><div class="text-[10px] font-mono text-slate-500">[${bt.accuracy_delta_pct?.ci_low}%, +${bt.accuracy_delta_pct?.ci_high}%]</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Macro F1 Delta</div><div class="text-sm font-extrabold ${bt.macro_f1_delta_pct?.mean >= 0 ? 'text-violet-700' : 'text-rose-700'} mt-0.5">${bt.macro_f1_delta_pct?.mean >= 0 ? '+' : ''}${bt.macro_f1_delta_pct?.mean}%</div><div class="text-[10px] font-mono text-slate-500">${bt.prob_variant_beats_control_f1}% Boot Win</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">McNemar Test</div><div class="text-sm font-extrabold text-slate-900 mt-0.5">p = ${mc.p_value}</div><div class="text-[10px] font-mono text-slate-500">${mc.significant_alpha_05 ? 'Significant (<0.05)' : 'Discordant Δ ' + mc.net_wins_for_variant}</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Brier Calibration</div><div class="text-sm font-extrabold text-emerald-700 mt-0.5">${bt.brier_delta?.mean}</div><div class="text-[10px] font-mono text-slate-500">Control ${bt.brier_control?.mean} -> Var ${bt.brier_variant?.mean}</div></div>
+    </div>
+    <div class="grid grid-cols-4 gap-2 text-center text-[11px] pt-1">
+      <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200"><div class="font-mono font-bold text-emerald-800">${c.both_correct}</div><div class="text-slate-600">Both Correct</div></div>
+      <div class="p-2 rounded-lg bg-violet-50 border border-violet-200"><div class="font-mono font-bold text-violet-800">${c.variant_only_correct}</div><div class="text-slate-600">Hybrid Only Won</div></div>
+      <div class="p-2 rounded-lg bg-amber-50 border border-amber-200"><div class="font-mono font-bold text-amber-800">${c.control_only_correct}</div><div class="text-slate-600">BoW Only Won</div></div>
+      <div class="p-2 rounded-lg bg-slate-100 border border-slate-200"><div class="font-mono font-bold text-slate-700">${c.both_wrong}</div><div class="text-slate-600">Both Missed</div></div>
+    </div>
+  `;
+}
+
+async function runLiveAbArena(overrideText) {
+  const box = $('liveAbArena');
+  if (!box) return;
+  const txt = (overrideText || $('textInput').value || CHIP_SAMPLES.negation).trim();
+  try {
+    const res = await fetch('/api/ab-compare', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: txt, control: 'bow_lr', variant: 'hybrid_ensemble' }),
+    });
+    const d = await res.json();
+    if (!res.ok) return;
+    const cm = EMOTION_META[d.control.emotion] || { emoji: '🎭', color: '#334155' };
+    const vm = EMOTION_META[d.variant.emotion] || { emoji: '🎭', color: '#6d28d9' };
+    box.innerHTML = `
+      <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700 italic truncate">&ldquo;${escapeHtml(d.text)}&rdquo;</div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500 uppercase">Control: BoW+LR</div><div class="text-lg font-extrabold capitalize mt-0.5" style="color:${cm.color}">${cm.emoji} ${d.control.emotion}</div><div class="text-[11px] font-mono text-slate-600">${d.control.confidence.toFixed(1)}%</div></div>
+        <div class="soft-card p-3 rounded-xl bg-purple-50/70 border-purple-200"><div class="text-[10px] font-mono text-violet-800 uppercase">Variant B: Hybrid</div><div class="text-lg font-extrabold capitalize mt-0.5" style="color:${vm.color}">${vm.emoji} ${d.variant.emotion}</div><div class="text-[11px] font-mono text-violet-800">${d.variant.confidence.toFixed(1)}%</div></div>
+      </div>
+      <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-[11px]">
+        <span>Confidence Shift: <strong class="font-mono">${d.confidence_delta > 0 ? '+' : ''}${d.confidence_delta}%</strong></span>
+        <span class="font-bold ${d.decision_flip ? 'text-amber-700' : 'text-emerald-700'}">${d.decision_flip ? 'Decision Flipped by Hybrid Features!' : 'Same Class Consensus'}</span>
+      </div>
+    `;
+  } catch (err) { console.error(err); }
+}
+
 function renderResearchLab() {
   if (!benchmarksData?.benchmarks) return;
+  renderAbStatsPanel();
+  runLiveAbArena();
   const rows = benchmarksData.benchmarks;
-  const colors = ['#6d28d9', '#db2777', '#0d9488', '#d97706'];
+  const colors = ['#6d28d9', '#db2777', '#0d9488', '#0284c7', '#d97706', '#9333ea', '#64748b'];
   if (benchFoldsChart) benchFoldsChart.destroy();
-  benchFoldsChart = new Chart($('benchFoldsChart'), { type: 'line', data: { labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'], datasets: rows.map((b, i) => ({ label: b.model, data: (b.cv_fold_accuracies || []).map(v => +(v * 100).toFixed(2)), borderColor: colors[i], backgroundColor: colors[i], tension: 0.25 })) }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 55, max: 95 } } } });
+  benchFoldsChart = new Chart($('benchFoldsChart'), { type: 'line', data: { labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'], datasets: rows.map((b, i) => ({ label: b.model, data: (b.cv_fold_accuracies || []).map(v => +(v * 100).toFixed(2)), borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.25 })) }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 55, max: 96 } } } });
+
+  const ablation = benchmarksData.ablation || [];
+  if ($('ablationTbody') && ablation.length) {
+    $('ablationTbody').innerHTML = ablation.map((r, i) => `
+      <tr class="${i === ablation.length - 1 ? 'bg-purple-50/70 font-semibold' : ''}">
+        <td class="p-2.5 text-slate-900">${escapeHtml(r.stage)}</td>
+        <td class="p-2.5 font-mono text-slate-500">${Number(r.feature_dim).toLocaleString()}</td>
+        <td class="p-2.5 font-mono font-bold text-violet-800">${r.cv_accuracy}%</td>
+        <td class="p-2.5 font-mono">${r.cv_macro_f1}%</td>
+        <td class="p-2.5 font-mono font-bold text-emerald-700">${r.test_accuracy}%</td>
+        <td class="p-2.5 font-mono">${r.test_macro_f1}%</td>
+      </tr>
+    `).join('');
+  }
+  if ($('ablationChart') && ablation.length) {
+    if (ablationChart) ablationChart.destroy();
+    ablationChart = new Chart($('ablationChart'), {
+      type: 'bar',
+      data: {
+        labels: ablation.map(a => a.stage.replace(/^\d+\.\s*/, '')),
+        datasets: [
+          { label: '5-Fold CV Acc %', data: ablation.map(a => a.cv_accuracy), backgroundColor: '#7c3aed', borderRadius: 4 },
+          { label: 'Held-Out Test %', data: ablation.map(a => a.test_accuracy), backgroundColor: '#059669', borderRadius: 4 },
+        ],
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { min: 75, max: 96 } } },
+    });
+  }
+
+  const ens = rows.find(r => r.key === 'hybrid_ensemble');
+  const bow = rows.find(r => r.key === 'bow_lr');
+  if ($('calibrationChart') && ens?.reliability_bins && bow?.reliability_bins) {
+    if (calibrationChart) calibrationChart.destroy();
+    calibrationChart = new Chart($('calibrationChart'), {
+      type: 'line',
+      data: {
+        datasets: [
+          { label: `Hybrid Ensemble (ECE ${ens.ece})`, data: ens.reliability_bins.map(b => ({ x: b.mean_conf, y: b.empirical_acc })), borderColor: '#6d28d9', backgroundColor: '#6d28d9', pointRadius: 4, tension: 0.2 },
+          { label: `Control BoW+LR (ECE ${bow.ece})`, data: bow.reliability_bins.map(b => ({ x: b.mean_conf, y: b.empirical_acc })), borderColor: '#db2777', backgroundColor: '#db2777', pointRadius: 3, tension: 0.2 },
+          { label: 'Ideal Calibration', data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], borderColor: '#cbd5e1', borderDash: [4, 4], pointRadius: 0 },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', min: 0, max: 1 }, y: { min: 0, max: 1 } } },
+    });
+  }
+
+  const stress = benchmarksData.stress_suite;
+  if ($('stressSuiteTbody') && stress?.cases) {
+    $('stressPassBadge').textContent = `Control ${stress.control_pass_count}/${stress.total} vs Hybrid ${stress.variant_pass_count}/${stress.total}`;
+    $('stressSuiteTbody').innerHTML = stress.cases.map(c => `
+      <tr>
+        <td class="p-2.5 font-bold text-slate-800">${escapeHtml(c.category)}</td>
+        <td class="p-2.5 text-slate-600 max-w-xs truncate" title="${escapeHtml(c.text)}">${escapeHtml(c.text)}</td>
+        <td class="p-2.5 font-bold capitalize">${c.expected}</td>
+        <td class="p-2.5 font-mono ${c.control_pass ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'}">${c.control_pass ? '✓' : '✗'} ${c.control_pred} (${c.control_conf}%)</td>
+        <td class="p-2.5 font-mono ${c.variant_pass ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'}">${c.variant_pass ? '✓' : '✗'} ${c.variant_pred} (${c.variant_conf}%)</td>
+      </tr>
+    `).join('');
+  }
+
   renderMatrixAndReport(); renderVocabExplorer();
 }
 function renderMatrixAndReport() {
@@ -306,8 +463,12 @@ function renderBatchResults(data) {
   $('batchDominant').textContent = `${data.summary.dominant_emoji} ${data.summary.dominant_emotion}`;
   $('batchAgree').textContent = `${data.summary.agreement_rate}%`;
   batchCsvExport = data.csv_export || '';
-  $('batchTriggerCloud').innerHTML = (data.summary.top_triggers || []).map(t => `<span class="token-pill token-pos">${escapeHtml(t.word)} (${t.count})</span>`).join('');
-  $('batchTableBody').innerHTML = data.rows.map(r => `<tr><td class="p-2.5 font-mono text-slate-500">${r.row_id}</td><td class="p-2.5 max-w-xs truncate">${escapeHtml(r.text)}</td><td class="p-2.5 font-bold capitalize" style="color:${r.color}">${r.emoji} ${r.emotion} (${r.confidence}%)</td><td class="p-2.5 capitalize">${r.tfidf_emotion} (${r.tfidf_confidence}%)</td><td class="p-2.5 font-mono text-emerald-700">${escapeHtml(r.top_trigger || '-')}</td></tr>`).join('');
+  const triggers = data.summary.top_trigger_words || data.summary.top_triggers || [];
+  $('batchTriggerCloud').innerHTML = triggers.map(t => `<span class="token-pill token-pos">${escapeHtml(t.word)} (${t.count})</span>`).join('');
+  $('batchTableBody').innerHTML = data.rows.map(r => {
+    const m = EMOTION_META[r.emotion] || { color: '#6d28d9' };
+    return `<tr><td class="p-2.5 font-mono text-slate-500">${r.row_id}</td><td class="p-2.5 max-w-xs truncate">${escapeHtml(r.text)}</td><td class="p-2.5 font-bold capitalize" style="color:${m.color}">${r.emoji} ${r.emotion} (${r.confidence}%)</td><td class="p-2.5 capitalize">${r.control_emotion || r.tfidf_emotion || '--'}</td><td class="p-2.5 font-mono text-emerald-700">${escapeHtml(r.top_triggers || r.top_trigger || '-')}</td></tr>`;
+  }).join('');
   const dist = data.summary.distribution;
   if (batchChart) batchChart.destroy();
   batchChart = new Chart($('batchChart'), { type: 'bar', data: { labels: Object.keys(dist).map(capitalise), datasets: [{ label: 'Entries', data: Object.values(dist), backgroundColor: Object.keys(dist).map(k => EMOTION_META[k].color), borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
@@ -350,6 +511,8 @@ function appendCoachMessage(markdownText, actions = [], quickReplies = [], meta 
 
 async function submitAgentChat(e) {
   e.preventDefault();
+  clearTimeout(hesitationTimer);
+  nudgedEmotion = true;
   const input = $('agent-input');
   const msg = input.value.trim();
   if (!msg) return;

@@ -76,7 +76,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">EmotiSense AI</h1>
-              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-violet-50 text-violet-800 border border-violet-200">Lavender Edition</span>
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-violet-50 text-violet-800 border border-violet-200">Lavender v3.0</span>
             </div>
             <div id="header-health-pill" class="text-[11px] text-slate-500 flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -95,7 +95,7 @@
             <i data-lucide="message-square-heart" class="w-3.5 h-3.5"></i> Emotion Studio
           </button>
           <button id="tab-btn-research" onclick="switchTab('research')" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
-            <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> NLP Research Lab
+            <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> NLP Research &amp; A/B Lab
           </button>
           <button id="tab-btn-batch" onclick="switchTab('batch')" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
             <i data-lucide="files" class="w-3.5 h-3.5"></i> Batch Journal
@@ -126,10 +126,13 @@
               <p class="text-xs text-slate-500">Type naturally — or tap a mood preset below. Pause &gt;3 seconds and EmotiCoach can help write or explore!</p>
             </div>
             <select id="modelSelect" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-violet-800 outline-none focus:border-violet-600">
-              <option value="bow_lr">BoW + Logistic Regression (89.84% Winner)</option>
-              <option value="tfidf_lr">TF-IDF + Logistic Regression (84.97%)</option>
-              <option value="bow_nb">BoW + Multinomial NB (74.50%)</option>
-              <option value="tfidf_nb">TF-IDF + Multinomial NB (62.80%)</option>
+              <option value="hybrid_ensemble" selected>Hybrid Soft Ensemble (Word+Char+Syntax)</option>
+              <option value="hybrid_lr">Hybrid Word+Char+Syntax + LogReg</option>
+              <option value="hybrid_svc">Hybrid Word+Char+Syntax + Calibrated SVC</option>
+              <option value="bow_lr">BoW + Logistic Regression (Control)</option>
+              <option value="tfidf_lr">TF-IDF + Logistic Regression</option>
+              <option value="bow_nb">BoW + Multinomial NB</option>
+              <option value="tfidf_nb">TF-IDF + Multinomial NB</option>
             </select>
           </div>
 
@@ -156,7 +159,7 @@
               <div class="flex items-center gap-3">
                 <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
                   <input type="checkbox" id="compareToggle" checked class="rounded border-slate-400" />
-                  <span>Compare All 4 Models</span>
+                  <span>Compare All 7 Models &amp; Live A/B</span>
                 </label>
                 <button type="button" onclick="clearInput()" class="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-200">Clear</button>
               </div>
@@ -204,6 +207,19 @@
               <div id="sentenceHeatmap" class="flex flex-wrap gap-1.5 pt-1"></div>
             </div>
 
+            <!-- Live Control vs Challenger Banner + Affective Syntax Signals -->
+            <div id="abLiveStrip" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                <div><div class="text-[10px] font-mono text-slate-500 uppercase">Control: BoW+LR</div><div id="abControlVal" class="font-bold text-slate-900 mt-0.5">--</div></div>
+                <span class="text-slate-300 font-bold">vs</span>
+                <div class="text-right"><div class="text-[10px] font-mono text-violet-700 uppercase">Variant B: Hybrid</div><div id="abVariantVal" class="font-bold text-violet-900 mt-0.5">--</div></div>
+              </div>
+              <div id="syntaxSignalsBox" class="p-3 rounded-xl bg-purple-50/70 border border-purple-200 text-[11px] flex flex-wrap items-center gap-1.5">
+                <span class="font-mono text-violet-700 font-bold">Affective Syntax:</span>
+                <span class="text-slate-600">Negations, pivots &amp; lexicon cues appear here.</span>
+              </div>
+            </div>
+
             <!-- 6-Emotion Probability Breakdown -->
             <div class="space-y-2">
               <span class="text-[11px] font-bold uppercase text-slate-500">Confidence Across All 6 Emotions</span>
@@ -229,9 +245,9 @@
       <!-- Right 5 cols -->
       <div class="lg:col-span-5 space-y-5">
         <div class="grid grid-cols-3 gap-3">
-          <div class="soft-panel p-4 rounded-2xl text-center"><div class="text-xl font-extrabold text-slate-900">15,939</div><div class="text-[10px] font-mono text-slate-500 uppercase">Clean Texts</div></div>
-          <div class="soft-panel p-4 rounded-2xl text-center"><div class="text-xl font-extrabold text-emerald-700">89.84%</div><div class="text-[10px] font-mono text-slate-500 uppercase">BoW+LR Test</div></div>
-          <div class="soft-panel p-4 rounded-2xl text-center"><div class="text-xl font-extrabold text-violet-700">87.95%</div><div class="text-[10px] font-mono text-slate-500 uppercase">5-Fold CV</div></div>
+          <div class="soft-panel p-4 rounded-2xl text-center"><div id="kpiCleanRows" class="text-xl font-extrabold text-slate-900">15,939</div><div class="text-[10px] font-mono text-slate-500 uppercase">Clean Texts</div></div>
+          <div class="soft-panel p-4 rounded-2xl text-center"><div id="kpiChampTest" class="text-xl font-extrabold text-emerald-700">--%</div><div class="text-[10px] font-mono text-slate-500 uppercase">Top Held-Out</div></div>
+          <div class="soft-panel p-4 rounded-2xl text-center"><div id="kpiChampCv" class="text-xl font-extrabold text-violet-700">--%</div><div class="text-[10px] font-mono text-slate-500 uppercase">5-Fold CV</div></div>
         </div>
 
         <div class="soft-panel p-5 rounded-2xl space-y-3">
@@ -253,28 +269,116 @@
          ========================================================= -->
     <section id="tab-research" class="hidden space-y-6">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">CV &amp; Test Winner</span><div class="text-lg font-extrabold text-emerald-700 mt-1">BoW + LogReg</div><div class="text-xs text-slate-500">87.95% CV · 89.84% Test</div></div>
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Macro F1 (Winner)</span><div class="text-lg font-extrabold text-violet-700 mt-1">0.8591</div><div class="text-xs text-slate-500">Balanced across 6 classes</div></div>
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Conflict Cleanup</span><div class="text-lg font-extrabold text-amber-700 mt-1">16,000 &rarr; 15,939</div><div class="text-xs text-slate-500">60 label conflicts + 1 dup dropped</div></div>
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Vocabulary Size</span><div class="text-lg font-extrabold text-slate-900 mt-1">13,527 Tokens</div><div class="text-xs text-slate-500">Stopwords &amp; negation kept</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Variant B Champion</span><div id="resWinnerName" class="text-lg font-extrabold text-emerald-700 mt-1">Hybrid Ensemble</div><div id="resWinnerMetrics" class="text-xs text-slate-500">Loading CV &amp; Test metrics...</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Macro F1 &amp; Calibration</span><div id="resMacroF1" class="text-lg font-extrabold text-violet-700 mt-1">--</div><div id="resCalSub" class="text-xs text-slate-500">Balanced across 6 classes</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Conflict Cleanup</span><div id="resCleanup" class="text-lg font-extrabold text-amber-700 mt-1">16,000 &rarr; 15,939</div><div class="text-xs text-slate-500">60 label conflicts + 1 dup dropped</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Hybrid Feature Space</span><div id="resVocabDim" class="text-lg font-extrabold text-slate-900 mt-1">--</div><div class="text-xs text-slate-500">Word(1,2) + Char(3,5) + Syntax</div></div>
+      </div>
+
+      <!-- Statistical A/B Hypothesis Suite & Live Arena -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 soft-panel p-6 rounded-2xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-extrabold text-slate-900">Statistical A/B Hypothesis Suite (Held-Out n=3,188)</h2>
+              <p class="text-xs text-slate-500">McNemar exact/chi2 test + Paired Bootstrap 95% CIs (Accuracy, Macro F1, Brier Calibration).</p>
+            </div>
+            <select id="abPairSelect" onchange="renderAbStatsPanel()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-violet-800">
+              <option value="bow_vs_hybrid_ensemble">Control BoW+LR vs Hybrid Ensemble</option>
+              <option value="bow_vs_hybrid_lr">Control BoW+LR vs Hybrid Word+Char+Syntax</option>
+              <option value="bow_vs_hybrid_svc">Control BoW+LR vs Hybrid Calibrated SVC</option>
+            </select>
+          </div>
+          <div id="abStatsPanel" class="space-y-3">
+            <div class="text-xs text-slate-400">Loading statistical hypothesis metrics...</div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 soft-panel p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-extrabold text-slate-900">Live Text A/B Arena</h2>
+              <p class="text-xs text-slate-500">Compare Control (Unigram BoW) vs Champion (Hybrid) on your active text.</p>
+            </div>
+            <button onclick="runLiveAbArena()" class="px-3 py-1.5 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold shrink-0">Run Live A/B</button>
+          </div>
+          <div id="liveAbArena" class="space-y-2.5 text-xs text-slate-500">
+            Analyze a sentence in Studio or click <strong>Run Live A/B</strong> to run Control vs Variant B side-by-side.
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Extraction & Scaling Ablation -->
+      <div class="soft-panel p-6 rounded-2xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">NLP Feature Extraction &amp; Scaling Ablation Study (5-Fold CV)</h3>
+            <p class="text-xs text-slate-500">Progressive lift from Unigram BoW &rarr; Sublinear Word(1,2) &rarr; Char-WB(3,5) Subwords &rarr; Scaled Affective Negation Syntax.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          <div class="lg:col-span-5 h-64"><canvas id="ablationChart"></canvas></div>
+          <div class="lg:col-span-7 overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-purple-50 text-slate-600 border-b border-purple-100"><tr><th class="p-2.5">Pipeline Stage</th><th class="p-2.5">Dims</th><th class="p-2.5">CV Acc</th><th class="p-2.5">CV F1</th><th class="p-2.5">Test Acc</th><th class="p-2.5">Test F1</th></tr></thead>
+              <tbody id="ablationTbody" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="soft-panel p-5 rounded-2xl">
-          <h3 class="text-sm font-extrabold text-slate-900 mb-3">5-Fold CV Accuracy Stability Across Models</h3>
+          <h3 class="text-sm font-extrabold text-slate-900 mb-3">5-Fold CV Accuracy Stability Across Challengers</h3>
           <div class="h-64"><canvas id="benchFoldsChart"></canvas></div>
         </div>
+        <div class="soft-panel p-5 rounded-2xl">
+          <h3 class="text-sm font-extrabold text-slate-900 mb-3">Confidence Calibration Reliability (10-Bin ECE &amp; Brier)</h3>
+          <div class="h-64"><canvas id="calibrationChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Adversarial Negation & Linguistic Stress Suite -->
+      <div class="soft-panel p-6 rounded-2xl space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Adversarial Negation, Pivot &amp; Rare-Class Stress Suite (Control vs Champion)</h3>
+            <p class="text-xs text-slate-500">Curated edge cases testing negation flips (&ldquo;did not feel angry&rdquo;), contrast pivots (&ldquo;terrified ... but thrilled&rdquo;), character elongations, and minority classes.</p>
+          </div>
+          <span id="stressPassBadge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">--</span>
+        </div>
+        <div class="overflow-x-auto max-h-80">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-purple-50 text-slate-600 sticky top-0 border-b border-purple-100"><tr><th class="p-2.5">Case</th><th class="p-2.5">Test Sentence</th><th class="p-2.5">Expected</th><th class="p-2.5">Control (BoW+LR)</th><th class="p-2.5">Variant B (Hybrid)</th></tr></thead>
+            <tbody id="stressSuiteTbody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="soft-panel p-5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-extrabold text-slate-900">6&times;6 Held-Out Confusion Matrix</h3>
             <select id="cmModelSelect" onchange="renderMatrixAndReport()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-violet-800">
-              <option value="bow_lr">BoW + Logistic Regression (89.84%)</option>
-              <option value="tfidf_lr">TF-IDF + Logistic Regression (84.97%)</option>
-              <option value="bow_nb">BoW + Multinomial NB (74.50%)</option>
-              <option value="tfidf_nb">TF-IDF + Multinomial NB (62.80%)</option>
+              <option value="hybrid_ensemble" selected>Hybrid Ensemble</option>
+              <option value="hybrid_lr">Hybrid Word+Char+Syntax + LR</option>
+              <option value="hybrid_svc">Hybrid Calibrated SVC</option>
+              <option value="bow_lr">BoW + Logistic Regression</option>
+              <option value="tfidf_lr">TF-IDF + Logistic Regression</option>
+              <option value="bow_nb">BoW + Multinomial NB</option>
+              <option value="tfidf_nb">TF-IDF + Multinomial NB</option>
             </select>
           </div>
           <div id="confusionMatrixGrid" class="overflow-x-auto"></div>
+        </div>
+        <div class="soft-panel p-5 rounded-2xl">
+          <h3 class="text-sm font-extrabold text-slate-900 mb-3">Per-Emotion Precision, Recall &amp; F1-Score</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-purple-50 text-slate-600 border-b border-purple-100"><tr><th class="p-2.5">Emotion</th><th class="p-2.5">Precision</th><th class="p-2.5">Recall</th><th class="p-2.5">F1-Score</th><th class="p-2.5">Support</th></tr></thead>
+              <tbody id="perClassTbody" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -282,11 +386,12 @@
       <div class="soft-panel p-6 rounded-2xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900">Learned Classifier Weight Explorer (Top Predictive Tokens)</h3>
-            <p class="text-xs text-slate-500">Inspect the strongest positive &amp; opposing coefficients learned by the classifier for any emotion.</p>
+            <h3 class="text-base font-extrabold text-slate-900">Learned Classifier Weight Explorer (Top Predictive N-Grams &amp; Syntax)</h3>
+            <p class="text-xs text-slate-500">Inspect strongest positive &amp; opposing coefficients learned by Logistic Regression or Hybrid Word+Char+Syntax models.</p>
           </div>
           <div class="flex gap-2">
             <select id="vocabModelSelect" onchange="renderVocabExplorer()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold">
+              <option value="hybrid_lr" selected>Hybrid Word+Char+Syntax + LR</option>
               <option value="bow_lr">BoW + Logistic Regression</option>
               <option value="tfidf_lr">TF-IDF + Logistic Regression</option>
             </select>
@@ -303,16 +408,6 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-emerald-700 mb-2">Top Positive Coefficients (Pull Toward Class)</div><div id="vocabPosList" class="flex flex-wrap gap-1.5"></div></div>
           <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-rose-700 mb-2">Top Negative Coefficients (Pull Away From Class)</div><div id="vocabNegList" class="flex flex-wrap gap-1.5"></div></div>
-        </div>
-      </div>
-
-      <div class="soft-panel p-5 rounded-2xl">
-        <h3 class="text-sm font-extrabold text-slate-900 mb-3">Per-Emotion Precision, Recall &amp; F1-Score</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead class="bg-purple-50 text-slate-600 border-b border-purple-100"><tr><th class="p-3">Emotion</th><th class="p-3">Precision</th><th class="p-3">Recall</th><th class="p-3">F1-Score</th><th class="p-3">Test Support</th></tr></thead>
-            <tbody id="perClassTbody" class="divide-y divide-slate-200"></tbody>
-          </table>
         </div>
       </div>
     </section>
@@ -348,7 +443,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Entries</span><div id="batchTotal" class="text-2xl font-extrabold text-slate-900">0</div></div>
           <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Dominant Mood</span><div id="batchDominant" class="text-2xl font-extrabold text-pink-600 capitalize">--</div></div>
-          <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">BoW vs TF-IDF Agree</span><div id="batchAgree" class="text-2xl font-extrabold text-emerald-700">0%</div></div>
+          <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Champion vs Control Agree</span><div id="batchAgree" class="text-2xl font-extrabold text-emerald-700">0%</div></div>
           <div class="soft-panel p-4 rounded-xl"><span class="text-[10px] font-mono uppercase text-slate-500">Export</span><button onclick="downloadBatchCsv()" class="mt-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Download CSV</button></div>
         </div>
 
@@ -362,7 +457,7 @@
             <h3 class="text-sm font-extrabold text-slate-900 mb-3">Classified Entries</h3>
             <div class="overflow-x-auto max-h-96 rounded-xl border border-slate-200">
               <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-purple-50 text-slate-600 sticky top-0"><tr><th class="p-2.5">#</th><th class="p-2.5">Text</th><th class="p-2.5">BoW+LR</th><th class="p-2.5">TF-IDF+LR</th><th class="p-2.5">Trigger</th></tr></thead>
+                <thead class="bg-purple-50 text-slate-600 sticky top-0"><tr><th class="p-2.5">#</th><th class="p-2.5">Text</th><th class="p-2.5">Hybrid Champion</th><th class="p-2.5">Control (BoW)</th><th class="p-2.5">Triggers</th></tr></thead>
                 <tbody id="batchTableBody" class="divide-y divide-slate-200"></tbody>
               </table>
             </div>
@@ -372,8 +467,8 @@
     </section>
 
     <footer class="pt-6 pb-8 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <div>EmotiSense AI · Lavender Editorial Edition · Syed Tahir Ahamed R</div>
-      <div class="font-mono text-[11px]">sklearn 1.8.0 · BoW+LR (89.84% Test) + TF-IDF+LR (84.97% Test)</div>
+      <div>EmotiSense AI v3.0 · Sunlit Lavender Edition · Syed Tahir Ahamed R</div>
+      <div class="font-mono text-[11px]">sklearn 1.8.0 · Hybrid Word+Char+AffectiveSyntax Ensemble &amp; Statistical A/B Suite</div>
     </footer>
   </main>
 

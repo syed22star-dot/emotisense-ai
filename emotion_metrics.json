@@ -1,16 +1,17 @@
 {
+  "version": "3.0.0",
   "sklearn_version": "1.8.0",
   "seed": 42,
   "dataset": {
     "raw_rows": 16000,
     "conflicting_removed": 60,
-    "duplicates_removed": 1,
-    "retained_rows": 15939,
-    "train_rows": 12751,
+    "duplicates_removed": 4,
+    "retained_rows": 15936,
+    "train_rows": 12748,
     "test_rows": 3188,
     "class_distribution": {
-      "joy": 5345,
-      "sadness": 4662,
+      "joy": 5344,
+      "sadness": 4660,
       "anger": 2152,
       "fear": 1926,
       "love": 1289,
@@ -26,377 +27,1069 @@
     "sadness",
     "surprise"
   ],
-  "selected_primary_key": "bow_lr",
+  "selected_primary_key": "hybrid_svc",
   "benchmarks": [
     {
-      "key": "bow_lr",
-      "model": "BoW + Logistic Regression",
-      "cv_accuracy": 0.879461,
-      "cv_sd": 0.00717,
+      "key": "hybrid_svc",
+      "model": "Hybrid BoW+TFIDF+Char+Syntax + Calibrated SVC",
+      "badge": "Margin Challenger",
+      "cv_accuracy": 0.887983,
+      "cv_sd": 0.003429,
       "cv_fold_accuracies": [
-        0.8679,
-        0.8902,
-        0.8816,
-        0.8776,
-        0.88
+        0.8843,
+        0.8894,
+        0.8847,
+        0.8878,
+        0.8937
       ],
-      "cv_macro_f1": 0.84141,
-      "test_accuracy": 0.898369,
-      "macro_f1": 0.859078,
-      "macro_precision": 0.87273,
-      "macro_recall": 0.847885,
-      "vocab_size": 13527,
+      "cv_macro_f1": 0.854128,
+      "test_accuracy": 0.902447,
+      "macro_f1": 0.863429,
+      "macro_precision": 0.87968,
+      "macro_recall": 0.851192,
+      "brier_score": 0.14604,
+      "ece": 0.06995,
+      "reliability_bins": [
+        {
+          "bin": "30-40%",
+          "count": 24,
+          "mean_conf": 0.3604,
+          "empirical_acc": 0.25
+        },
+        {
+          "bin": "40-50%",
+          "count": 91,
+          "mean_conf": 0.4653,
+          "empirical_acc": 0.5714
+        },
+        {
+          "bin": "50-60%",
+          "count": 243,
+          "mean_conf": 0.5498,
+          "empirical_acc": 0.5432
+        },
+        {
+          "bin": "60-70%",
+          "count": 256,
+          "mean_conf": 0.6508,
+          "empirical_acc": 0.7734
+        },
+        {
+          "bin": "70-80%",
+          "count": 332,
+          "mean_conf": 0.7553,
+          "empirical_acc": 0.8584
+        },
+        {
+          "bin": "80-90%",
+          "count": 647,
+          "mean_conf": 0.8592,
+          "empirical_acc": 0.9583
+        },
+        {
+          "bin": "90-100%",
+          "count": 1595,
+          "mean_conf": 0.9433,
+          "empirical_acc": 0.9931
+        }
+      ],
+      "vocab_size": 44015,
       "per_class": {
         "anger": {
-          "precision": 0.877,
-          "recall": 0.8953,
-          "f1": 0.8861,
-          "support": 430
+          "precision": 0.8909,
+          "recall": 0.9281,
+          "f1": 0.9091,
+          "support": 431
         },
         "fear": {
-          "precision": 0.8698,
-          "recall": 0.8675,
-          "f1": 0.8687,
+          "precision": 0.8629,
+          "recall": 0.8831,
+          "f1": 0.8729,
           "support": 385
         },
         "joy": {
-          "precision": 0.9117,
-          "recall": 0.9364,
-          "f1": 0.9239,
+          "precision": 0.9033,
+          "recall": 0.9345,
+          "f1": 0.9186,
           "support": 1069
         },
         "love": {
-          "precision": 0.8148,
-          "recall": 0.7674,
-          "f1": 0.7904,
+          "precision": 0.827,
+          "recall": 0.7597,
+          "f1": 0.7919,
           "support": 258
         },
         "sadness": {
-          "precision": 0.9333,
-          "recall": 0.9303,
-          "f1": 0.9318,
-          "support": 933
+          "precision": 0.9496,
+          "recall": 0.9292,
+          "f1": 0.9393,
+          "support": 932
         },
         "surprise": {
-          "precision": 0.8298,
-          "recall": 0.6903,
-          "f1": 0.7536,
+          "precision": 0.8444,
+          "recall": 0.6726,
+          "f1": 0.7488,
+          "support": 113
+        }
+      },
+      "confusion_matrix": [
+        [
+          400,
+          4,
+          11,
+          3,
+          12,
+          1
+        ],
+        [
+          10,
+          340,
+          14,
+          1,
+          12,
+          8
+        ],
+        [
+          5,
+          8,
+          999,
+          35,
+          19,
+          3
+        ],
+        [
+          2,
+          3,
+          57,
+          196,
+          0,
+          0
+        ],
+        [
+          31,
+          17,
+          14,
+          2,
+          866,
+          2
+        ],
+        [
+          1,
+          22,
+          11,
+          0,
+          3,
+          76
+        ]
+      ]
+    },
+    {
+      "key": "hybrid_ensemble",
+      "model": "Hybrid Soft Ensemble (LR+SVC+ComplementNB)",
+      "badge": "Variant B Champion",
+      "cv_accuracy": 0.885708,
+      "cv_sd": 0.005853,
+      "cv_fold_accuracies": [
+        0.8773,
+        0.8902,
+        0.88,
+        0.8902,
+        0.8909
+      ],
+      "cv_macro_f1": 0.849432,
+      "test_accuracy": 0.904642,
+      "macro_f1": 0.864978,
+      "macro_precision": 0.881625,
+      "macro_recall": 0.852196,
+      "brier_score": 0.14706,
+      "ece": 0.07295,
+      "reliability_bins": [
+        {
+          "bin": "20-30%",
+          "count": 5,
+          "mean_conf": 0.2828,
+          "empirical_acc": 0.4
+        },
+        {
+          "bin": "30-40%",
+          "count": 28,
+          "mean_conf": 0.3655,
+          "empirical_acc": 0.5357
+        },
+        {
+          "bin": "40-50%",
+          "count": 121,
+          "mean_conf": 0.4552,
+          "empirical_acc": 0.5041
+        },
+        {
+          "bin": "50-60%",
+          "count": 238,
+          "mean_conf": 0.5485,
+          "empirical_acc": 0.5882
+        },
+        {
+          "bin": "60-70%",
+          "count": 260,
+          "mean_conf": 0.6509,
+          "empirical_acc": 0.8077
+        },
+        {
+          "bin": "70-80%",
+          "count": 339,
+          "mean_conf": 0.7526,
+          "empirical_acc": 0.882
+        },
+        {
+          "bin": "80-90%",
+          "count": 631,
+          "mean_conf": 0.8573,
+          "empirical_acc": 0.9588
+        },
+        {
+          "bin": "90-100%",
+          "count": 1566,
+          "mean_conf": 0.9507,
+          "empirical_acc": 0.9911
+        }
+      ],
+      "vocab_size": 44015,
+      "per_class": {
+        "anger": {
+          "precision": 0.8929,
+          "recall": 0.9281,
+          "f1": 0.9101,
+          "support": 431
+        },
+        "fear": {
+          "precision": 0.8645,
+          "recall": 0.8779,
+          "f1": 0.8711,
+          "support": 385
+        },
+        "joy": {
+          "precision": 0.9048,
+          "recall": 0.9429,
+          "f1": 0.9235,
+          "support": 1069
+        },
+        "love": {
+          "precision": 0.8419,
+          "recall": 0.7636,
+          "f1": 0.8008,
+          "support": 258
+        },
+        "sadness": {
+          "precision": 0.9505,
+          "recall": 0.9281,
+          "f1": 0.9392,
+          "support": 932
+        },
+        "surprise": {
+          "precision": 0.8352,
+          "recall": 0.6726,
+          "f1": 0.7451,
+          "support": 113
+        }
+      },
+      "confusion_matrix": [
+        [
+          400,
+          2,
+          11,
+          3,
+          14,
+          1
+        ],
+        [
+          12,
+          338,
+          14,
+          1,
+          12,
+          8
+        ],
+        [
+          2,
+          9,
+          1008,
+          31,
+          16,
+          3
+        ],
+        [
+          3,
+          3,
+          55,
+          197,
+          0,
+          0
+        ],
+        [
+          30,
+          17,
+          15,
+          2,
+          865,
+          3
+        ],
+        [
+          1,
+          22,
+          11,
+          0,
+          3,
+          76
+        ]
+      ]
+    },
+    {
+      "key": "bow_lr",
+      "model": "BoW + Logistic Regression",
+      "badge": "Control Baseline",
+      "cv_accuracy": 0.880609,
+      "cv_sd": 0.004699,
+      "cv_fold_accuracies": [
+        0.8718,
+        0.8847,
+        0.88,
+        0.8839,
+        0.8827
+      ],
+      "cv_macro_f1": 0.840752,
+      "test_accuracy": 0.895859,
+      "macro_f1": 0.857133,
+      "macro_precision": 0.86764,
+      "macro_recall": 0.849103,
+      "brier_score": 0.16541,
+      "ece": 0.07596,
+      "reliability_bins": [
+        {
+          "bin": "20-30%",
+          "count": 5,
+          "mean_conf": 0.2825,
+          "empirical_acc": 0.8
+        },
+        {
+          "bin": "30-40%",
+          "count": 36,
+          "mean_conf": 0.3617,
+          "empirical_acc": 0.4722
+        },
+        {
+          "bin": "40-50%",
+          "count": 145,
+          "mean_conf": 0.4621,
+          "empirical_acc": 0.5586
+        },
+        {
+          "bin": "50-60%",
+          "count": 225,
+          "mean_conf": 0.5535,
+          "empirical_acc": 0.6489
+        },
+        {
+          "bin": "60-70%",
+          "count": 252,
+          "mean_conf": 0.6504,
+          "empirical_acc": 0.754
+        },
+        {
+          "bin": "70-80%",
+          "count": 400,
+          "mean_conf": 0.7551,
+          "empirical_acc": 0.88
+        },
+        {
+          "bin": "80-90%",
+          "count": 818,
+          "mean_conf": 0.8594,
+          "empirical_acc": 0.956
+        },
+        {
+          "bin": "90-100%",
+          "count": 1307,
+          "mean_conf": 0.9479,
+          "empirical_acc": 0.9824
+        }
+      ],
+      "vocab_size": 13443,
+      "per_class": {
+        "anger": {
+          "precision": 0.8691,
+          "recall": 0.8933,
+          "f1": 0.881,
+          "support": 431
+        },
+        "fear": {
+          "precision": 0.8686,
+          "recall": 0.8753,
+          "f1": 0.8719,
+          "support": 385
+        },
+        "joy": {
+          "precision": 0.9164,
+          "recall": 0.9326,
+          "f1": 0.9244,
+          "support": 1069
+        },
+        "love": {
+          "precision": 0.7915,
+          "recall": 0.7946,
+          "f1": 0.793,
+          "support": 258
+        },
+        "sadness": {
+          "precision": 0.9324,
+          "recall": 0.9174,
+          "f1": 0.9248,
+          "support": 932
+        },
+        "surprise": {
+          "precision": 0.828,
+          "recall": 0.6814,
+          "f1": 0.7476,
           "support": 113
         }
       },
       "confusion_matrix": [
         [
           385,
-          5,
+          6,
           12,
           7,
           20,
           1
         ],
         [
-          13,
-          334,
-          9,
-          3,
-          17,
-          9
+          12,
+          337,
+          6,
+          2,
+          20,
+          8
         ],
         [
+          7,
           5,
-          9,
-          1001,
-          33,
-          16,
-          5
+          997,
+          42,
+          14,
+          4
         ],
         [
           4,
           2,
-          49,
-          198,
-          5,
+          43,
+          205,
+          4,
           0
         ],
         [
-          32,
-          14,
-          16,
-          2,
-          868,
-          1
+          35,
+          17,
+          19,
+          3,
+          855,
+          3
         ],
         [
           0,
-          20,
+          21,
           11,
           0,
           4,
-          78
+          77
+        ]
+      ]
+    },
+    {
+      "key": "hybrid_lr",
+      "model": "Hybrid BoW+TFIDF+Char+Syntax + LR",
+      "badge": "Challenger v3",
+      "cv_accuracy": 0.866333,
+      "cv_sd": 0.005565,
+      "cv_fold_accuracies": [
+        0.8588,
+        0.8671,
+        0.8612,
+        0.8725,
+        0.8721
+      ],
+      "cv_macro_f1": 0.825441,
+      "test_accuracy": 0.890527,
+      "macro_f1": 0.849213,
+      "macro_precision": 0.876122,
+      "macro_recall": 0.828811,
+      "brier_score": 0.16906,
+      "ece": 0.06741,
+      "reliability_bins": [
+        {
+          "bin": "20-30%",
+          "count": 4,
+          "mean_conf": 0.2634,
+          "empirical_acc": 0.5
+        },
+        {
+          "bin": "30-40%",
+          "count": 64,
+          "mean_conf": 0.3628,
+          "empirical_acc": 0.4219
+        },
+        {
+          "bin": "40-50%",
+          "count": 148,
+          "mean_conf": 0.4614,
+          "empirical_acc": 0.5068
+        },
+        {
+          "bin": "50-60%",
+          "count": 224,
+          "mean_conf": 0.5506,
+          "empirical_acc": 0.6473
+        },
+        {
+          "bin": "60-70%",
+          "count": 271,
+          "mean_conf": 0.6518,
+          "empirical_acc": 0.8192
+        },
+        {
+          "bin": "70-80%",
+          "count": 379,
+          "mean_conf": 0.7528,
+          "empirical_acc": 0.8575
+        },
+        {
+          "bin": "80-90%",
+          "count": 602,
+          "mean_conf": 0.8559,
+          "empirical_acc": 0.9502
+        },
+        {
+          "bin": "90-100%",
+          "count": 1496,
+          "mean_conf": 0.9566,
+          "empirical_acc": 0.9833
+        }
+      ],
+      "vocab_size": 44015,
+      "per_class": {
+        "anger": {
+          "precision": 0.8949,
+          "recall": 0.8886,
+          "f1": 0.8917,
+          "support": 431
+        },
+        "fear": {
+          "precision": 0.8658,
+          "recall": 0.8545,
+          "f1": 0.8601,
+          "support": 385
+        },
+        "joy": {
+          "precision": 0.8736,
+          "recall": 0.9439,
+          "f1": 0.9074,
+          "support": 1069
+        },
+        "love": {
+          "precision": 0.8486,
+          "recall": 0.7171,
+          "f1": 0.7773,
+          "support": 258
+        },
+        "sadness": {
+          "precision": 0.9348,
+          "recall": 0.9227,
+          "f1": 0.9287,
+          "support": 932
+        },
+        "surprise": {
+          "precision": 0.8391,
+          "recall": 0.646,
+          "f1": 0.73,
+          "support": 113
+        }
+      },
+      "confusion_matrix": [
+        [
+          383,
+          4,
+          21,
+          4,
+          18,
+          1
+        ],
+        [
+          10,
+          329,
+          21,
+          1,
+          16,
+          8
+        ],
+        [
+          3,
+          8,
+          1009,
+          26,
+          20,
+          3
+        ],
+        [
+          2,
+          2,
+          67,
+          185,
+          2,
+          0
+        ],
+        [
+          28,
+          16,
+          24,
+          2,
+          860,
+          2
+        ],
+        [
+          2,
+          21,
+          13,
+          0,
+          4,
+          73
         ]
       ]
     },
     {
       "key": "tfidf_lr",
       "model": "TF-IDF + Logistic Regression",
-      "cv_accuracy": 0.829661,
-      "cv_sd": 0.007604,
+      "badge": "Normalized Baseline",
+      "cv_accuracy": 0.829778,
+      "cv_sd": 0.00756,
       "cv_fold_accuracies": [
-        0.8197,
-        0.8298,
-        0.8431,
-        0.8271,
-        0.8286
+        0.8176,
+        0.8396,
+        0.8255,
+        0.8321,
+        0.8341
       ],
-      "cv_macro_f1": 0.753455,
-      "test_accuracy": 0.849749,
-      "macro_f1": 0.776846,
-      "macro_precision": 0.865679,
-      "macro_recall": 0.733768,
-      "vocab_size": 13527,
+      "cv_macro_f1": 0.754843,
+      "test_accuracy": 0.847867,
+      "macro_f1": 0.776074,
+      "macro_precision": 0.868303,
+      "macro_recall": 0.731587,
+      "brier_score": 0.30096,
+      "ece": 0.2398,
+      "reliability_bins": [
+        {
+          "bin": "10-20%",
+          "count": 1,
+          "mean_conf": 0.1982,
+          "empirical_acc": 0.0
+        },
+        {
+          "bin": "20-30%",
+          "count": 93,
+          "mean_conf": 0.2776,
+          "empirical_acc": 0.3548
+        },
+        {
+          "bin": "30-40%",
+          "count": 416,
+          "mean_conf": 0.3551,
+          "empirical_acc": 0.6034
+        },
+        {
+          "bin": "40-50%",
+          "count": 546,
+          "mean_conf": 0.4513,
+          "empirical_acc": 0.7326
+        },
+        {
+          "bin": "50-60%",
+          "count": 524,
+          "mean_conf": 0.5503,
+          "empirical_acc": 0.8588
+        },
+        {
+          "bin": "60-70%",
+          "count": 525,
+          "mean_conf": 0.6528,
+          "empirical_acc": 0.9543
+        },
+        {
+          "bin": "70-80%",
+          "count": 500,
+          "mean_conf": 0.748,
+          "empirical_acc": 0.978
+        },
+        {
+          "bin": "80-90%",
+          "count": 366,
+          "mean_conf": 0.8463,
+          "empirical_acc": 0.9891
+        },
+        {
+          "bin": "90-100%",
+          "count": 217,
+          "mean_conf": 0.94,
+          "empirical_acc": 1.0
+        }
+      ],
+      "vocab_size": 13443,
       "per_class": {
         "anger": {
-          "precision": 0.8953,
-          "recall": 0.8349,
-          "f1": 0.864,
-          "support": 430
+          "precision": 0.9028,
+          "recall": 0.819,
+          "f1": 0.8589,
+          "support": 431
         },
         "fear": {
-          "precision": 0.8623,
-          "recall": 0.7481,
-          "f1": 0.8011,
+          "precision": 0.8537,
+          "recall": 0.7429,
+          "f1": 0.7944,
           "support": 385
         },
         "joy": {
-          "precision": 0.8055,
-          "recall": 0.957,
-          "f1": 0.8747,
+          "precision": 0.8013,
+          "recall": 0.9579,
+          "f1": 0.8726,
           "support": 1069
         },
         "love": {
-          "precision": 0.8428,
-          "recall": 0.5194,
-          "f1": 0.6427,
+          "precision": 0.8261,
+          "recall": 0.5155,
+          "f1": 0.6348,
           "support": 258
         },
         "sadness": {
-          "precision": 0.8826,
-          "recall": 0.9185,
-          "f1": 0.9002,
-          "support": 933
+          "precision": 0.8836,
+          "recall": 0.9206,
+          "f1": 0.9017,
+          "support": 932
         },
         "surprise": {
-          "precision": 0.9057,
-          "recall": 0.4248,
-          "f1": 0.5783,
+          "precision": 0.9423,
+          "recall": 0.4336,
+          "f1": 0.5939,
           "support": 113
         }
       },
       "confusion_matrix": [
         [
-          359,
+          353,
           4,
-          34,
-          2,
-          30,
+          39,
+          3,
+          31,
           1
         ],
         [
           12,
-          288,
-          46,
+          286,
+          50,
           2,
-          34,
-          3
+          33,
+          2
         ],
         [
-          3,
-          5,
-          1023,
-          19,
+          2,
+          4,
+          1024,
+          21,
           18,
-          1
-        ],
-        [
-          3,
-          1,
-          101,
-          134,
-          19,
           0
         ],
         [
-          24,
-          8,
-          42,
+          3,
           2,
-          857,
+          100,
+          133,
+          20,
+          0
+        ],
+        [
+          21,
+          11,
+          40,
+          2,
+          858,
           0
         ],
         [
           0,
           28,
-          24,
+          25,
           0,
-          13,
-          48
+          11,
+          49
         ]
       ]
     },
     {
       "key": "bow_nb",
       "model": "BoW + Multinomial NB",
-      "cv_accuracy": 0.726532,
-      "cv_sd": 0.00809,
+      "badge": "Generative Baseline",
+      "cv_accuracy": 0.72631,
+      "cv_sd": 0.00236,
       "cv_fold_accuracies": [
-        0.7174,
-        0.7271,
-        0.7392,
-        0.7306,
-        0.7184
+        0.7267,
+        0.722,
+        0.7263,
+        0.7289,
+        0.7277
       ],
-      "cv_macro_f1": 0.530301,
-      "test_accuracy": 0.744981,
-      "macro_f1": 0.559119,
-      "macro_precision": 0.859078,
-      "macro_recall": 0.530871,
-      "vocab_size": 13527,
+      "cv_macro_f1": 0.531456,
+      "test_accuracy": 0.750314,
+      "macro_f1": 0.567014,
+      "macro_precision": 0.861966,
+      "macro_recall": 0.537348,
+      "brier_score": 0.38766,
+      "ece": 0.07333,
+      "reliability_bins": [
+        {
+          "bin": "20-30%",
+          "count": 6,
+          "mean_conf": 0.2726,
+          "empirical_acc": 0.1667
+        },
+        {
+          "bin": "30-40%",
+          "count": 45,
+          "mean_conf": 0.3652,
+          "empirical_acc": 0.4
+        },
+        {
+          "bin": "40-50%",
+          "count": 160,
+          "mean_conf": 0.4561,
+          "empirical_acc": 0.4375
+        },
+        {
+          "bin": "50-60%",
+          "count": 278,
+          "mean_conf": 0.549,
+          "empirical_acc": 0.4856
+        },
+        {
+          "bin": "60-70%",
+          "count": 306,
+          "mean_conf": 0.6502,
+          "empirical_acc": 0.5261
+        },
+        {
+          "bin": "70-80%",
+          "count": 348,
+          "mean_conf": 0.7509,
+          "empirical_acc": 0.7011
+        },
+        {
+          "bin": "80-90%",
+          "count": 500,
+          "mean_conf": 0.8535,
+          "empirical_acc": 0.772
+        },
+        {
+          "bin": "90-100%",
+          "count": 1545,
+          "mean_conf": 0.9656,
+          "empirical_acc": 0.8913
+        }
+      ],
+      "vocab_size": 13443,
       "per_class": {
         "anger": {
-          "precision": 0.9021,
-          "recall": 0.6,
-          "f1": 0.7207,
-          "support": 430
+          "precision": 0.9017,
+          "recall": 0.6172,
+          "f1": 0.7328,
+          "support": 431
         },
         "fear": {
-          "precision": 0.8638,
-          "recall": 0.4779,
-          "f1": 0.6154,
+          "precision": 0.8714,
+          "recall": 0.4753,
+          "f1": 0.6151,
           "support": 385
         },
         "joy": {
-          "precision": 0.7082,
-          "recall": 0.9467,
-          "f1": 0.8102,
+          "precision": 0.7225,
+          "recall": 0.9523,
+          "f1": 0.8216,
           "support": 1069
         },
         "love": {
-          "precision": 0.96,
-          "recall": 0.186,
-          "f1": 0.3117,
+          "precision": 0.9615,
+          "recall": 0.1938,
+          "f1": 0.3226,
           "support": 258
         },
         "sadness": {
-          "precision": 0.7203,
-          "recall": 0.9303,
-          "f1": 0.812,
-          "support": 933
+          "precision": 0.7146,
+          "recall": 0.9324,
+          "f1": 0.8091,
+          "support": 932
         },
         "surprise": {
           "precision": 1.0,
-          "recall": 0.0442,
-          "f1": 0.0847,
+          "recall": 0.0531,
+          "f1": 0.1008,
           "support": 113
         }
       },
       "confusion_matrix": [
         [
-          258,
+          266,
           4,
-          69,
+          63,
           1,
-          98,
+          97,
           0
         ],
         [
           12,
-          184,
-          81,
+          183,
+          75,
           0,
-          108,
+          115,
           0
         ],
         [
-          4,
           3,
-          1012,
+          2,
+          1018,
           0,
+          46,
+          0
+        ],
+        [
+          3,
+          1,
+          147,
           50,
+          57,
           0
         ],
         [
+          9,
           3,
+          50,
           1,
-          158,
-          48,
-          48,
+          869,
           0
         ],
         [
-          8,
-          3,
-          53,
-          1,
-          868,
-          0
-        ],
-        [
-          1,
-          18,
+          2,
+          17,
           56,
           0,
-          33,
-          5
+          32,
+          6
         ]
       ]
     },
     {
       "key": "tfidf_nb",
       "model": "TF-IDF + Multinomial NB",
-      "cv_accuracy": 0.619952,
-      "cv_sd": 0.003409,
+      "badge": "TF-IDF Baseline",
+      "cv_accuracy": 0.621902,
+      "cv_sd": 0.005307,
       "cv_fold_accuracies": [
-        0.6154,
-        0.622,
-        0.62,
-        0.6251,
-        0.6173
+        0.6208,
+        0.629,
+        0.6137,
+        0.6199,
+        0.6261
       ],
-      "cv_macro_f1": 0.321791,
-      "test_accuracy": 0.62798,
-      "macro_f1": 0.332758,
-      "macro_precision": 0.684497,
-      "macro_recall": 0.360887,
-      "vocab_size": 13527,
+      "cv_macro_f1": 0.324485,
+      "test_accuracy": 0.631117,
+      "macro_f1": 0.340705,
+      "macro_precision": 0.687778,
+      "macro_recall": 0.365644,
+      "brier_score": 0.52891,
+      "ece": 0.15901,
+      "reliability_bins": [
+        {
+          "bin": "20-30%",
+          "count": 17,
+          "mean_conf": 0.283,
+          "empirical_acc": 0.1176
+        },
+        {
+          "bin": "30-40%",
+          "count": 338,
+          "mean_conf": 0.3632,
+          "empirical_acc": 0.2071
+        },
+        {
+          "bin": "40-50%",
+          "count": 658,
+          "mean_conf": 0.4546,
+          "empirical_acc": 0.269
+        },
+        {
+          "bin": "50-60%",
+          "count": 714,
+          "mean_conf": 0.5492,
+          "empirical_acc": 0.6331
+        },
+        {
+          "bin": "60-70%",
+          "count": 700,
+          "mean_conf": 0.6497,
+          "empirical_acc": 0.8414
+        },
+        {
+          "bin": "70-80%",
+          "count": 551,
+          "mean_conf": 0.7449,
+          "empirical_acc": 0.9365
+        },
+        {
+          "bin": "80-90%",
+          "count": 199,
+          "mean_conf": 0.8358,
+          "empirical_acc": 0.9799
+        },
+        {
+          "bin": "90-100%",
+          "count": 11,
+          "mean_conf": 0.9179,
+          "empirical_acc": 1.0
+        }
+      ],
+      "vocab_size": 13443,
       "per_class": {
         "anger": {
-          "precision": 0.9571,
-          "recall": 0.1558,
-          "f1": 0.268,
-          "support": 430
+          "precision": 0.9474,
+          "recall": 0.1671,
+          "f1": 0.284,
+          "support": 431
         },
         "fear": {
-          "precision": 0.902,
-          "recall": 0.1195,
-          "f1": 0.211,
+          "precision": 0.9273,
+          "recall": 0.1325,
+          "f1": 0.2318,
           "support": 385
         },
         "joy": {
-          "precision": 0.5783,
-          "recall": 0.9813,
-          "f1": 0.7277,
+          "precision": 0.5789,
+          "recall": 0.9775,
+          "f1": 0.7272,
           "support": 1069
         },
         "love": {
           "precision": 1.0,
-          "recall": 0.0116,
-          "f1": 0.023,
+          "recall": 0.0155,
+          "f1": 0.0305,
           "support": 258
         },
         "sadness": {
-          "precision": 0.6696,
-          "recall": 0.8971,
-          "f1": 0.7668,
-          "support": 933
+          "precision": 0.6731,
+          "recall": 0.9013,
+          "f1": 0.7706,
+          "support": 932
         },
         "surprise": {
           "precision": 0.0,
@@ -407,129 +1100,560 @@
       },
       "confusion_matrix": [
         [
-          67,
+          72,
           0,
-          196,
+          197,
           0,
-          167,
+          162,
           0
         ],
         [
-          2,
-          46,
-          194,
-          0,
-          143,
-          0
-        ],
-        [
-          0,
-          0,
-          1049,
-          0,
-          20,
-          0
-        ],
-        [
-          0,
-          0,
-          209,
           3,
-          46,
+          51,
+          191,
+          0,
+          140,
+          0
+        ],
+        [
+          0,
+          0,
+          1045,
+          0,
+          24,
+          0
+        ],
+        [
+          0,
+          0,
+          207,
+          4,
+          47,
           0
         ],
         [
           1,
           0,
-          95,
+          91,
           0,
-          837,
+          840,
           0
         ],
         [
           0,
-          5,
-          71,
+          4,
+          74,
           0,
-          37,
+          35,
           0
         ]
       ]
     }
   ],
+  "ablation": [
+    {
+      "key": "word_bow",
+      "stage": "1. Unigram BoW (Raw Counts)",
+      "feature_dim": 13443,
+      "cv_accuracy": 88.06,
+      "cv_macro_f1": 84.08,
+      "test_accuracy": 89.59,
+      "test_macro_f1": 85.71
+    },
+    {
+      "key": "word_tfidf",
+      "stage": "2. Unigram TF-IDF (L2 Norm)",
+      "feature_dim": 13443,
+      "cv_accuracy": 82.98,
+      "cv_macro_f1": 75.48,
+      "test_accuracy": 84.79,
+      "test_macro_f1": 77.61
+    },
+    {
+      "key": "word_12_sub",
+      "stage": "3. Scaled BoW(1,2) + Sublinear TF-IDF(1,2)",
+      "feature_dim": 32000,
+      "cv_accuracy": 88.19,
+      "cv_macro_f1": 84.63,
+      "test_accuracy": 90.24,
+      "test_macro_f1": 86.38
+    },
+    {
+      "key": "word_char",
+      "stage": "4. Word(1,2) + Char-WB(3,5) Subwords",
+      "feature_dim": 44000,
+      "cv_accuracy": 88.7,
+      "cv_macro_f1": 85.31,
+      "test_accuracy": 90.24,
+      "test_macro_f1": 86.31
+    },
+    {
+      "key": "hybrid_unscaled",
+      "stage": "5. Word+Char + AffectiveSyntax (Unscaled)",
+      "feature_dim": 44015,
+      "cv_accuracy": 88.69,
+      "cv_macro_f1": 85.28,
+      "test_accuracy": 90.24,
+      "test_macro_f1": 86.26
+    },
+    {
+      "key": "hybrid_std",
+      "stage": "6. Word+Char + Syntax (StandardScaler w/o mean)",
+      "feature_dim": 44015,
+      "cv_accuracy": 88.24,
+      "cv_macro_f1": 84.71,
+      "test_accuracy": 89.59,
+      "test_macro_f1": 85.67
+    },
+    {
+      "key": "hybrid_maxabs",
+      "stage": "7. Word+Char + Syntax (MaxAbsScaler)",
+      "feature_dim": 44015,
+      "cv_accuracy": 88.8,
+      "cv_macro_f1": 85.41,
+      "test_accuracy": 90.24,
+      "test_macro_f1": 86.34
+    }
+  ],
+  "ab_tests": {
+    "bow_vs_hybrid_ensemble": {
+      "control_key": "bow_lr",
+      "control_name": "BoW + Logistic Regression (Control)",
+      "variant_key": "hybrid_ensemble",
+      "variant_name": "Hybrid Soft Ensemble (LR+SVC+CNB)",
+      "mcnemar": {
+        "method": "continuity_corrected_chi2",
+        "contingency": {
+          "both_correct": 2754,
+          "control_only_correct": 102,
+          "variant_only_correct": 130,
+          "both_wrong": 202
+        },
+        "discordant_pairs": 232,
+        "net_wins_for_variant": 28,
+        "statistic": 3.1422,
+        "p_value": 0.076289,
+        "significant_alpha_05": false
+      },
+      "bootstrap": {
+        "n_bootstrap": 600,
+        "accuracy_control_pct": {
+          "mean": 89.554,
+          "ci_low": 88.33,
+          "ci_high": 90.59,
+          "median": 89.555
+        },
+        "accuracy_variant_pct": {
+          "mean": 90.467,
+          "ci_low": 89.398,
+          "ci_high": 91.405,
+          "median": 90.496
+        },
+        "accuracy_delta_pct": {
+          "mean": 0.912,
+          "ci_low": -0.031,
+          "ci_high": 1.819,
+          "median": 0.91
+        },
+        "macro_f1_control_pct": {
+          "mean": 85.649,
+          "ci_low": 83.979,
+          "ci_high": 87.353,
+          "median": 85.63
+        },
+        "macro_f1_variant_pct": {
+          "mean": 86.481,
+          "ci_low": 84.753,
+          "ci_high": 88.132,
+          "median": 86.53
+        },
+        "macro_f1_delta_pct": {
+          "mean": 0.832,
+          "ci_low": -0.472,
+          "ci_high": 2.083,
+          "median": 0.816
+        },
+        "brier_control": {
+          "mean": 0.1657,
+          "ci_low": 0.1538,
+          "ci_high": 0.1785,
+          "median": 0.1658
+        },
+        "brier_variant": {
+          "mean": 0.1473,
+          "ci_low": 0.1368,
+          "ci_high": 0.1584,
+          "median": 0.147
+        },
+        "brier_delta": {
+          "mean": -0.0185,
+          "ci_low": -0.0264,
+          "ci_high": -0.0104,
+          "median": -0.0183
+        },
+        "prob_variant_beats_control_acc": 97.0,
+        "prob_variant_beats_control_f1": 90.5
+      }
+    },
+    "bow_vs_hybrid_lr": {
+      "control_key": "bow_lr",
+      "control_name": "BoW + Logistic Regression (Control)",
+      "variant_key": "hybrid_lr",
+      "variant_name": "Hybrid Word+Char+Syntax + LR",
+      "mcnemar": {
+        "method": "continuity_corrected_chi2",
+        "contingency": {
+          "both_correct": 2730,
+          "control_only_correct": 126,
+          "variant_only_correct": 109,
+          "both_wrong": 223
+        },
+        "discordant_pairs": 235,
+        "net_wins_for_variant": -17,
+        "statistic": 1.0894,
+        "p_value": 0.296613,
+        "significant_alpha_05": false
+      },
+      "bootstrap": {
+        "n_bootstrap": 600,
+        "accuracy_control_pct": {
+          "mean": 89.554,
+          "ci_low": 88.33,
+          "ci_high": 90.59,
+          "median": 89.555
+        },
+        "accuracy_variant_pct": {
+          "mean": 89.048,
+          "ci_low": 87.923,
+          "ci_high": 90.151,
+          "median": 89.053
+        },
+        "accuracy_delta_pct": {
+          "mean": -0.506,
+          "ci_low": -1.444,
+          "ci_high": 0.408,
+          "median": -0.502
+        },
+        "macro_f1_control_pct": {
+          "mean": 85.649,
+          "ci_low": 83.979,
+          "ci_high": 87.353,
+          "median": 85.63
+        },
+        "macro_f1_variant_pct": {
+          "mean": 84.895,
+          "ci_low": 83.202,
+          "ci_high": 86.489,
+          "median": 84.906
+        },
+        "macro_f1_delta_pct": {
+          "mean": -0.755,
+          "ci_low": -2.126,
+          "ci_high": 0.597,
+          "median": -0.761
+        },
+        "brier_control": {
+          "mean": 0.1657,
+          "ci_low": 0.1538,
+          "ci_high": 0.1785,
+          "median": 0.1658
+        },
+        "brier_variant": {
+          "mean": 0.1694,
+          "ci_low": 0.1578,
+          "ci_high": 0.1822,
+          "median": 0.1691
+        },
+        "brier_delta": {
+          "mean": 0.0036,
+          "ci_low": -0.0052,
+          "ci_high": 0.012,
+          "median": 0.0035
+        },
+        "prob_variant_beats_control_acc": 13.5,
+        "prob_variant_beats_control_f1": 13.5
+      }
+    },
+    "bow_vs_hybrid_svc": {
+      "control_key": "bow_lr",
+      "control_name": "BoW + Logistic Regression (Control)",
+      "variant_key": "hybrid_svc",
+      "variant_name": "Hybrid Word+Char+Syntax + Calibrated SVC",
+      "mcnemar": {
+        "method": "continuity_corrected_chi2",
+        "contingency": {
+          "both_correct": 2752,
+          "control_only_correct": 104,
+          "variant_only_correct": 125,
+          "both_wrong": 207
+        },
+        "discordant_pairs": 229,
+        "net_wins_for_variant": 21,
+        "statistic": 1.7467,
+        "p_value": 0.186289,
+        "significant_alpha_05": false
+      },
+      "bootstrap": {
+        "n_bootstrap": 600,
+        "accuracy_control_pct": {
+          "mean": 89.554,
+          "ci_low": 88.33,
+          "ci_high": 90.59,
+          "median": 89.555
+        },
+        "accuracy_variant_pct": {
+          "mean": 90.239,
+          "ci_low": 89.115,
+          "ci_high": 91.186,
+          "median": 90.276
+        },
+        "accuracy_delta_pct": {
+          "mean": 0.685,
+          "ci_low": -0.282,
+          "ci_high": 1.6,
+          "median": 0.69
+        },
+        "macro_f1_control_pct": {
+          "mean": 85.649,
+          "ci_low": 83.979,
+          "ci_high": 87.353,
+          "median": 85.63
+        },
+        "macro_f1_variant_pct": {
+          "mean": 86.316,
+          "ci_low": 84.518,
+          "ci_high": 88.051,
+          "median": 86.376
+        },
+        "macro_f1_delta_pct": {
+          "mean": 0.667,
+          "ci_low": -0.789,
+          "ci_high": 2.018,
+          "median": 0.686
+        },
+        "brier_control": {
+          "mean": 0.1657,
+          "ci_low": 0.1538,
+          "ci_high": 0.1785,
+          "median": 0.1658
+        },
+        "brier_variant": {
+          "mean": 0.1463,
+          "ci_low": 0.1358,
+          "ci_high": 0.1571,
+          "median": 0.1461
+        },
+        "brier_delta": {
+          "mean": -0.0195,
+          "ci_low": -0.0273,
+          "ci_high": -0.0115,
+          "median": -0.0194
+        },
+        "prob_variant_beats_control_acc": 92.2,
+        "prob_variant_beats_control_f1": 84.8
+      }
+    }
+  },
+  "stress_suite": {
+    "control_pass_count": 6,
+    "variant_pass_count": 8,
+    "total": 10,
+    "cases": [
+      {
+        "id": "neg_relief",
+        "category": "Negation Flip",
+        "text": "i did not feel angry or upset at all i actually felt relieved and grateful",
+        "expected": "joy",
+        "control_pred": "anger",
+        "control_conf": 43.7,
+        "control_pass": false,
+        "variant_pred": "anger",
+        "variant_conf": 46.8,
+        "variant_pass": false
+      },
+      {
+        "id": "neg_sad_joy",
+        "category": "Negated Positive",
+        "text": "i was not happy with the delay and felt deeply disappointed all evening",
+        "expected": "sadness",
+        "control_pred": "sadness",
+        "control_conf": 61.3,
+        "control_pass": true,
+        "variant_pred": "sadness",
+        "variant_conf": 74.7,
+        "variant_pass": true
+      },
+      {
+        "id": "contrast_pivot",
+        "category": "Contrast Pivot",
+        "text": "i was terrified before the surgery but ended up thrilled and smiling afterward",
+        "expected": "joy",
+        "control_pred": "fear",
+        "control_conf": 91.3,
+        "control_pass": false,
+        "variant_pred": "joy",
+        "variant_conf": 67.2,
+        "variant_pass": true
+      },
+      {
+        "id": "neg_fear_calm",
+        "category": "Negation + Affection",
+        "text": "i am not scared anymore i feel warm caring and deeply thankful for you",
+        "expected": "love",
+        "control_pred": "fear",
+        "control_conf": 51.2,
+        "control_pass": false,
+        "variant_pred": "love",
+        "variant_conf": 44.5,
+        "variant_pass": true
+      },
+      {
+        "id": "elongation_oov",
+        "category": "Character Elongation",
+        "text": "i feel sooooo happpppy and super thankful for my friends today",
+        "expected": "joy",
+        "control_pred": "joy",
+        "control_conf": 98.3,
+        "control_pass": true,
+        "variant_pred": "joy",
+        "variant_conf": 97.3,
+        "variant_pass": true
+      },
+      {
+        "id": "typo_angry",
+        "category": "High-Arousal Anger",
+        "text": "i am genuinely furious and totally irritated by that disrespectful lie",
+        "expected": "anger",
+        "control_pred": "anger",
+        "control_conf": 99.1,
+        "control_pass": true,
+        "variant_pred": "anger",
+        "variant_conf": 97.9,
+        "variant_pass": true
+      },
+      {
+        "id": "rare_surprise",
+        "category": "Minority Class",
+        "text": "i was completely stunned and speechless when the unexpected letter arrived",
+        "expected": "surprise",
+        "control_pred": "surprise",
+        "control_conf": 37.0,
+        "control_pass": true,
+        "variant_pred": "surprise",
+        "variant_conf": 82.6,
+        "variant_pass": true
+      },
+      {
+        "id": "rare_love",
+        "category": "Affectionate Lexicon",
+        "text": "i adore how tender affectionate and compassionate my partner has been lately",
+        "expected": "love",
+        "control_pred": "love",
+        "control_conf": 99.8,
+        "control_pass": true,
+        "variant_pred": "love",
+        "variant_conf": 99.3,
+        "variant_pass": true
+      },
+      {
+        "id": "subtle_fear",
+        "category": "Somatic Anxiety",
+        "text": "my heart is racing because i feel uneasy tense and worried about tomorrow",
+        "expected": "fear",
+        "control_pred": "sadness",
+        "control_conf": 35.0,
+        "control_pass": false,
+        "variant_pred": "sadness",
+        "variant_conf": 44.5,
+        "variant_pass": false
+      },
+      {
+        "id": "subtle_sadness",
+        "category": "Latent Grief",
+        "text": "sitting in this quiet room makes me feel empty lonely and heartbroken",
+        "expected": "sadness",
+        "control_pred": "sadness",
+        "control_conf": 99.8,
+        "control_pass": true,
+        "variant_pred": "sadness",
+        "variant_conf": 99.0,
+        "variant_pass": true
+      }
+    ]
+  },
   "top_tokens": {
     "bow_lr": {
       "anger": {
         "positive": [
           {
             "word": "greedy",
-            "weight": 3.526
+            "weight": 3.523
           },
           {
             "word": "dissatisfied",
-            "weight": 3.449
+            "weight": 3.45
           },
           {
             "word": "resentful",
-            "weight": 3.432
+            "weight": 3.43
           },
           {
             "word": "insulted",
-            "weight": 3.408
-          },
-          {
-            "word": "dangerous",
-            "weight": 3.381
-          },
-          {
-            "word": "offended",
-            "weight": 3.353
-          },
-          {
-            "word": "irritable",
-            "weight": 3.345
-          },
-          {
-            "word": "rude",
-            "weight": 3.321
-          },
-          {
-            "word": "distracted",
-            "weight": 3.321
+            "weight": 3.393
           },
           {
             "word": "petty",
-            "weight": 3.317
+            "weight": 3.385
           },
           {
-            "word": "fucked",
-            "weight": 3.299
+            "word": "dangerous",
+            "weight": 3.384
+          },
+          {
+            "word": "irritable",
+            "weight": 3.335
           },
           {
             "word": "rebellious",
-            "weight": 3.293
+            "weight": 3.335
+          },
+          {
+            "word": "offended",
+            "weight": 3.335
+          },
+          {
+            "word": "rude",
+            "weight": 3.333
+          },
+          {
+            "word": "distracted",
+            "weight": 3.32
+          },
+          {
+            "word": "irritated",
+            "weight": 3.307
           }
         ],
         "negative": [
           {
             "word": "weird",
-            "weight": -1.288
+            "weight": -1.306
           },
           {
             "word": "overwhelmed",
-            "weight": -1.179
-          },
-          {
-            "word": "strange",
-            "weight": -1.061
+            "weight": -1.169
           },
           {
             "word": "handle",
-            "weight": -1.041
+            "weight": -1.08
+          },
+          {
+            "word": "strange",
+            "weight": -1.076
           },
           {
             "word": "helpless",
-            "weight": -1.037
+            "weight": -1.026
           },
           {
             "word": "passionate",
@@ -537,27 +1661,27 @@
           },
           {
             "word": "beloved",
-            "weight": -0.996
+            "weight": -0.968
           },
           {
             "word": "accepted",
-            "weight": -0.987
-          },
-          {
-            "word": "ungrateful",
-            "weight": -0.954
+            "weight": -0.951
           },
           {
             "word": "surprised",
-            "weight": -0.926
+            "weight": -0.934
           },
           {
             "word": "sexual",
-            "weight": -0.908
+            "weight": -0.914
           },
           {
-            "word": "curious",
-            "weight": -0.902
+            "word": "shaken",
+            "weight": -0.906
+          },
+          {
+            "word": "amazing",
+            "weight": -0.9
           }
         ]
       },
@@ -565,101 +1689,101 @@
         "positive": [
           {
             "word": "pressured",
-            "weight": 3.915
-          },
-          {
-            "word": "shaken",
-            "weight": 3.779
+            "weight": 3.906
           },
           {
             "word": "terrified",
-            "weight": 3.753
+            "weight": 3.806
+          },
+          {
+            "word": "shaken",
+            "weight": 3.789
           },
           {
             "word": "vulnerable",
-            "weight": 3.634
+            "weight": 3.62
           },
           {
             "word": "uncertain",
-            "weight": 3.56
+            "weight": 3.539
           },
           {
             "word": "reluctant",
-            "weight": 3.496
+            "weight": 3.512
           },
           {
             "word": "shaky",
-            "weight": 3.412
-          },
-          {
-            "word": "apprehensive",
-            "weight": 3.378
+            "weight": 3.394
           },
           {
             "word": "paranoid",
-            "weight": 3.365
+            "weight": 3.386
           },
           {
             "word": "threatened",
-            "weight": 3.359
+            "weight": 3.383
+          },
+          {
+            "word": "apprehensive",
+            "weight": 3.356
           },
           {
             "word": "intimidated",
-            "weight": 3.341
+            "weight": 3.356
           },
           {
             "word": "fearful",
-            "weight": 3.278
+            "weight": 3.247
           }
         ],
         "negative": [
           {
-            "word": "stressed",
-            "weight": -1.151
+            "word": "dazed",
+            "weight": -1.131
           },
           {
             "word": "passionate",
-            "weight": -1.105
+            "weight": -1.097
           },
           {
-            "word": "dazed",
-            "weight": -1.101
+            "word": "stressed",
+            "weight": -1.087
           },
           {
             "word": "peace",
-            "weight": -0.952
+            "weight": -0.984
           },
           {
             "word": "relaxed",
-            "weight": -0.952
-          },
-          {
-            "word": "glad",
-            "weight": -0.941
+            "weight": -0.982
           },
           {
             "word": "troubled",
-            "weight": -0.908
+            "weight": -0.951
           },
           {
             "word": "sweet",
-            "weight": -0.876
+            "weight": -0.905
+          },
+          {
+            "word": "glad",
+            "weight": -0.898
           },
           {
             "word": "beloved",
-            "weight": -0.858
+            "weight": -0.877
           },
           {
             "word": "generous",
-            "weight": -0.834
+            "weight": -0.844
           },
           {
-            "word": "depressed",
-            "weight": -0.818
+            "word": "supporting",
+            "weight": -0.821
           },
           {
-            "word": "curious",
-            "weight": -0.803
+            "word": "unwelcome",
+            "weight": -0.82
           }
         ]
       },
@@ -667,101 +1791,101 @@
         "positive": [
           {
             "word": "innocent",
-            "weight": 2.79
+            "weight": 2.765
           },
           {
             "word": "superior",
-            "weight": 2.587
-          },
-          {
-            "word": "satisfied",
-            "weight": 2.581
-          },
-          {
-            "word": "sincere",
-            "weight": 2.544
+            "weight": 2.608
           },
           {
             "word": "resolved",
-            "weight": 2.53
+            "weight": 2.58
           },
           {
-            "word": "respected",
-            "weight": 2.504
+            "word": "satisfied",
+            "weight": 2.503
+          },
+          {
+            "word": "sincere",
+            "weight": 2.475
           },
           {
             "word": "pleasant",
-            "weight": 2.499
+            "weight": 2.47
+          },
+          {
+            "word": "respected",
+            "weight": 2.439
           },
           {
             "word": "divine",
-            "weight": 2.498
+            "weight": 2.403
           },
           {
-            "word": "valued",
-            "weight": 2.498
+            "word": "adventurous",
+            "weight": 2.388
           },
           {
-            "word": "relaxed",
-            "weight": 2.328
+            "word": "assured",
+            "weight": 2.362
           },
           {
             "word": "invigorated",
-            "weight": 2.322
+            "weight": 2.33
           },
           {
-            "word": "eager",
-            "weight": 2.312
+            "word": "determined",
+            "weight": 2.324
           }
         ],
         "negative": [
           {
             "word": "agitated",
-            "weight": -2.109
-          },
-          {
-            "word": "strange",
-            "weight": -2.098
+            "weight": -2.107
           },
           {
             "word": "overwhelmed",
-            "weight": -1.962
+            "weight": -1.899
+          },
+          {
+            "word": "strange",
+            "weight": -1.865
           },
           {
             "word": "hated",
-            "weight": -1.791
-          },
-          {
-            "word": "weird",
-            "weight": -1.731
+            "weight": -1.771
           },
           {
             "word": "tortured",
-            "weight": -1.695
-          },
-          {
-            "word": "pressured",
-            "weight": -1.644
+            "weight": -1.708
           },
           {
             "word": "caring",
-            "weight": -1.639
+            "weight": -1.644
           },
           {
             "word": "jealous",
-            "weight": -1.626
+            "weight": -1.632
           },
           {
-            "word": "frustrated",
-            "weight": -1.571
+            "word": "amazed",
+            "weight": -1.62
+          },
+          {
+            "word": "pressured",
+            "weight": -1.609
           },
           {
             "word": "impressed",
-            "weight": -1.569
+            "weight": -1.532
           },
           {
-            "word": "groggy",
-            "weight": -1.536
+            "word": "helpless",
+            "weight": -1.53
+          },
+          {
+            "word": "weird",
+            "weight": -1.507
           }
         ]
       },
@@ -769,101 +1893,101 @@
         "positive": [
           {
             "word": "nostalgic",
-            "weight": 4.056
+            "weight": 4.078
           },
           {
             "word": "sympathetic",
-            "weight": 3.969
+            "weight": 3.955
           },
           {
             "word": "naughty",
-            "weight": 3.884
+            "weight": 3.877
           },
           {
             "word": "horny",
-            "weight": 3.804
+            "weight": 3.8
           },
           {
             "word": "longing",
-            "weight": 3.692
+            "weight": 3.705
           },
           {
             "word": "fond",
-            "weight": 3.64
+            "weight": 3.66
           },
           {
             "word": "caring",
-            "weight": 3.61
-          },
-          {
-            "word": "tender",
-            "weight": 3.542
-          },
-          {
-            "word": "delicate",
-            "weight": 3.54
+            "weight": 3.626
           },
           {
             "word": "loyal",
-            "weight": 3.525
+            "weight": 3.54
+          },
+          {
+            "word": "delicate",
+            "weight": 3.528
+          },
+          {
+            "word": "tender",
+            "weight": 3.528
           },
           {
             "word": "loving",
-            "weight": 3.416
+            "weight": 3.419
           },
           {
-            "word": "romantic",
-            "weight": 3.342
+            "word": "supportive",
+            "weight": 3.338
           }
         ],
         "negative": [
           {
             "word": "amazing",
-            "weight": -0.997
-          },
-          {
-            "word": "overwhelmed",
-            "weight": -0.941
+            "weight": -0.983
           },
           {
             "word": "stressed",
-            "weight": -0.941
+            "weight": -0.975
+          },
+          {
+            "word": "overwhelmed",
+            "weight": -0.954
           },
           {
             "word": "strange",
-            "weight": -0.931
+            "weight": -0.944
           },
           {
             "word": "marrying",
-            "weight": -0.853
+            "weight": -0.87
           },
           {
             "word": "weird",
-            "weight": -0.834
+            "weight": -0.865
           },
           {
             "word": "tortured",
-            "weight": -0.807
-          },
-          {
-            "word": "pleased",
-            "weight": -0.798
-          },
-          {
-            "word": "nervous",
-            "weight": -0.794
+            "weight": -0.826
           },
           {
             "word": "seriously",
-            "weight": -0.793
+            "weight": -0.803
+          },
+          {
+            "word": "nervous",
+            "weight": -0.798
+          },
+          {
+            "word": "hated",
+            "weight": -0.789
           },
           {
             "word": "ache",
-            "weight": -0.788
+            "weight": -0.78
           },
           {
             "word": "helpless",
-            "weight": -0.779
+            "weight": -0.763
           }
         ]
       },
@@ -871,101 +1995,101 @@
         "positive": [
           {
             "word": "lethargic",
-            "weight": 3.089
+            "weight": 3.066
           },
           {
             "word": "melancholy",
-            "weight": 2.996
+            "weight": 2.895
           },
           {
             "word": "unwelcome",
-            "weight": 2.885
-          },
-          {
-            "word": "ungrateful",
-            "weight": 2.846
+            "weight": 2.864
           },
           {
             "word": "burdened",
-            "weight": 2.806
-          },
-          {
-            "word": "groggy",
-            "weight": 2.789
-          },
-          {
-            "word": "lousy",
-            "weight": 2.788
-          },
-          {
-            "word": "gloomy",
-            "weight": 2.751
+            "weight": 2.8
           },
           {
             "word": "defeated",
-            "weight": 2.726
+            "weight": 2.784
+          },
+          {
+            "word": "groggy",
+            "weight": 2.749
           },
           {
             "word": "needy",
-            "weight": 2.709
+            "weight": 2.73
+          },
+          {
+            "word": "gloomy",
+            "weight": 2.72
+          },
+          {
+            "word": "lousy",
+            "weight": 2.712
           },
           {
             "word": "disturbed",
-            "weight": 2.705
+            "weight": 2.691
           },
           {
-            "word": "troubled",
-            "weight": 2.701
+            "word": "awkward",
+            "weight": 2.68
+          },
+          {
+            "word": "fake",
+            "weight": 2.677
           }
         ],
         "negative": [
           {
             "word": "strange",
-            "weight": -1.687
-          },
-          {
-            "word": "supporting",
-            "weight": -1.603
+            "weight": -1.691
           },
           {
             "word": "accepted",
-            "weight": -1.597
+            "weight": -1.647
+          },
+          {
+            "word": "supporting",
+            "weight": -1.611
           },
           {
             "word": "irritable",
-            "weight": -1.596
+            "weight": -1.598
           },
           {
             "word": "tortured",
-            "weight": -1.566
-          },
-          {
-            "word": "passionate",
-            "weight": -1.468
-          },
-          {
-            "word": "grumpy",
-            "weight": -1.416
-          },
-          {
-            "word": "wronged",
-            "weight": -1.413
+            "weight": -1.541
           },
           {
             "word": "irritated",
-            "weight": -1.397
+            "weight": -1.541
           },
           {
             "word": "sweet",
-            "weight": -1.396
+            "weight": -1.428
           },
           {
-            "word": "selfish",
-            "weight": -1.383
+            "word": "passionate",
+            "weight": -1.424
+          },
+          {
+            "word": "grumpy",
+            "weight": -1.4
+          },
+          {
+            "word": "weird",
+            "weight": -1.386
+          },
+          {
+            "word": "wronged",
+            "weight": -1.377
           },
           {
             "word": "faithful",
-            "weight": -1.363
+            "weight": -1.355
           }
         ]
       },
@@ -973,27 +2097,27 @@
         "positive": [
           {
             "word": "amazed",
-            "weight": 4.588
+            "weight": 4.625
           },
           {
             "word": "impressed",
-            "weight": 4.518
-          },
-          {
-            "word": "surprised",
-            "weight": 4.413
-          },
-          {
-            "word": "shocked",
-            "weight": 4.374
+            "weight": 4.499
           },
           {
             "word": "curious",
-            "weight": 4.336
+            "weight": 4.384
+          },
+          {
+            "word": "shocked",
+            "weight": 4.37
+          },
+          {
+            "word": "surprised",
+            "weight": 4.262
           },
           {
             "word": "dazed",
-            "weight": 4.183
+            "weight": 4.184
           },
           {
             "word": "funny",
@@ -1001,49 +2125,61 @@
           },
           {
             "word": "overwhelmed",
-            "weight": 3.56
+            "weight": 3.556
           },
           {
             "word": "stunned",
-            "weight": 3.301
+            "weight": 3.289
           },
           {
             "word": "strange",
-            "weight": 3.164
+            "weight": 3.043
           },
           {
             "word": "weird",
-            "weight": 3.02
+            "weight": 2.924
           },
           {
             "word": "amazing",
-            "weight": 3.008
+            "weight": 2.922
           }
         ],
         "negative": [
           {
+            "word": "smells",
+            "weight": -0.758
+          },
+          {
+            "word": "moisturizer",
+            "weight": -0.657
+          },
+          {
             "word": "stressed",
-            "weight": -0.64
+            "weight": -0.606
           },
           {
             "word": "mine",
-            "weight": -0.568
+            "weight": -0.563
           },
           {
             "word": "awkward",
-            "weight": -0.565
-          },
-          {
-            "word": "generous",
-            "weight": -0.549
-          },
-          {
-            "word": "your",
-            "weight": -0.537
+            "weight": -0.559
           },
           {
             "word": "lately",
-            "weight": -0.528
+            "weight": -0.553
+          },
+          {
+            "word": "generous",
+            "weight": -0.55
+          },
+          {
+            "word": "your",
+            "weight": -0.539
+          },
+          {
+            "word": "skin",
+            "weight": -0.525
           },
           {
             "word": "before",
@@ -1051,23 +2187,11 @@
           },
           {
             "word": "stop",
-            "weight": -0.509
+            "weight": -0.506
           },
           {
-            "word": "more",
+            "word": "mind",
             "weight": -0.503
-          },
-          {
-            "word": "break",
-            "weight": -0.473
-          },
-          {
-            "word": "super",
-            "weight": -0.472
-          },
-          {
-            "word": "lost",
-            "weight": -0.472
           }
         ]
       }
@@ -1076,98 +2200,98 @@
       "anger": {
         "positive": [
           {
-            "word": "dangerous",
-            "weight": 5.131
+            "word": "greedy",
+            "weight": 5.123
           },
           {
-            "word": "greedy",
-            "weight": 5.12
+            "word": "dangerous",
+            "weight": 5.098
           },
           {
             "word": "resentful",
-            "weight": 4.904
+            "weight": 4.895
           },
           {
             "word": "insulted",
-            "weight": 4.901
-          },
-          {
-            "word": "dissatisfied",
-            "weight": 4.878
+            "weight": 4.881
           },
           {
             "word": "offended",
-            "weight": 4.871
+            "weight": 4.854
           },
           {
             "word": "rude",
-            "weight": 4.866
+            "weight": 4.847
+          },
+          {
+            "word": "dissatisfied",
+            "weight": 4.846
           },
           {
             "word": "selfish",
-            "weight": 4.823
+            "weight": 4.787
           },
           {
             "word": "irritable",
-            "weight": 4.803
+            "weight": 4.78
           },
           {
             "word": "violent",
-            "weight": 4.723
-          },
-          {
-            "word": "fucked",
-            "weight": 4.719
+            "weight": 4.727
           },
           {
             "word": "irritated",
-            "weight": 4.701
+            "weight": 4.717
+          },
+          {
+            "word": "fucked",
+            "weight": 4.67
           }
         ],
         "negative": [
           {
             "word": "weird",
-            "weight": -1.853
+            "weight": -1.846
           },
           {
             "word": "overwhelmed",
-            "weight": -1.769
+            "weight": -1.736
           },
           {
             "word": "strange",
-            "weight": -1.62
+            "weight": -1.625
           },
           {
             "word": "passionate",
-            "weight": -1.415
-          },
-          {
-            "word": "accepted",
-            "weight": -1.368
+            "weight": -1.383
           },
           {
             "word": "helpless",
-            "weight": -1.35
+            "weight": -1.344
+          },
+          {
+            "word": "accepted",
+            "weight": -1.319
           },
           {
             "word": "amazing",
-            "weight": -1.277
-          },
-          {
-            "word": "surprised",
-            "weight": -1.25
-          },
-          {
-            "word": "generous",
-            "weight": -1.244
-          },
-          {
-            "word": "beloved",
-            "weight": -1.233
+            "weight": -1.31
           },
           {
             "word": "supporting",
-            "weight": -1.229
+            "weight": -1.244
+          },
+          {
+            "word": "generous",
+            "weight": -1.241
+          },
+          {
+            "word": "surprised",
+            "weight": -1.234
+          },
+          {
+            "word": "beloved",
+            "weight": -1.227
           },
           {
             "word": "caring",
@@ -1179,101 +2303,101 @@
         "positive": [
           {
             "word": "terrified",
-            "weight": 5.672
+            "weight": 5.696
           },
           {
             "word": "shaken",
-            "weight": 5.641
+            "weight": 5.634
           },
           {
             "word": "pressured",
-            "weight": 5.546
+            "weight": 5.51
           },
           {
             "word": "vulnerable",
-            "weight": 5.3
+            "weight": 5.286
           },
           {
             "word": "uncertain",
-            "weight": 5.171
+            "weight": 5.16
           },
           {
             "word": "reluctant",
-            "weight": 5.149
+            "weight": 5.152
           },
           {
             "word": "scared",
-            "weight": 4.9
+            "weight": 4.891
           },
           {
             "word": "unsure",
-            "weight": 4.844
+            "weight": 4.834
           },
           {
             "word": "paranoid",
-            "weight": 4.77
+            "weight": 4.763
           },
           {
             "word": "shy",
-            "weight": 4.733
+            "weight": 4.71
           },
           {
             "word": "intimidated",
-            "weight": 4.713
+            "weight": 4.683
           },
           {
             "word": "shaky",
-            "weight": 4.657
+            "weight": 4.635
           }
         ],
         "negative": [
           {
             "word": "passionate",
-            "weight": -1.571
+            "weight": -1.53
           },
           {
             "word": "stressed",
-            "weight": -1.494
+            "weight": -1.416
           },
           {
             "word": "sweet",
-            "weight": -1.234
+            "weight": -1.266
           },
           {
             "word": "dazed",
-            "weight": -1.231
+            "weight": -1.236
           },
           {
             "word": "for",
-            "weight": -1.23
+            "weight": -1.213
           },
           {
             "word": "generous",
-            "weight": -1.163
+            "weight": -1.176
           },
           {
             "word": "supporting",
-            "weight": -1.133
-          },
-          {
-            "word": "curious",
-            "weight": -1.131
-          },
-          {
-            "word": "friends",
-            "weight": -1.122
+            "weight": -1.153
           },
           {
             "word": "beloved",
-            "weight": -1.122
-          },
-          {
-            "word": "amazed",
-            "weight": -1.109
+            "weight": -1.142
           },
           {
             "word": "amazing",
-            "weight": -1.096
+            "weight": -1.12
+          },
+          {
+            "word": "friends",
+            "weight": -1.111
+          },
+          {
+            "word": "amazed",
+            "weight": -1.09
+          },
+          {
+            "word": "curious",
+            "weight": -1.089
           }
         ]
       },
@@ -1281,101 +2405,101 @@
         "positive": [
           {
             "word": "satisfied",
-            "weight": 3.651
-          },
-          {
-            "word": "divine",
-            "weight": 3.554
-          },
-          {
-            "word": "pleasant",
-            "weight": 3.552
+            "weight": 3.686
           },
           {
             "word": "innocent",
-            "weight": 3.542
+            "weight": 3.52
           },
           {
-            "word": "valued",
+            "word": "pleasant",
             "weight": 3.499
           },
           {
             "word": "superior",
-            "weight": 3.485
+            "weight": 3.462
+          },
+          {
+            "word": "divine",
+            "weight": 3.451
           },
           {
             "word": "ok",
-            "weight": 3.448
+            "weight": 3.435
           },
           {
             "word": "resolved",
-            "weight": 3.428
-          },
-          {
-            "word": "sincere",
-            "weight": 3.311
+            "weight": 3.366
           },
           {
             "word": "convinced",
-            "weight": 3.302
-          },
-          {
-            "word": "useful",
-            "weight": 3.279
+            "weight": 3.312
           },
           {
             "word": "successful",
-            "weight": 3.262
+            "weight": 3.3
+          },
+          {
+            "word": "sincere",
+            "weight": 3.237
+          },
+          {
+            "word": "respected",
+            "weight": 3.187
+          },
+          {
+            "word": "festive",
+            "weight": 3.165
           }
         ],
         "negative": [
           {
             "word": "strange",
-            "weight": -3.233
+            "weight": -3.051
           },
           {
             "word": "overwhelmed",
-            "weight": -2.867
-          },
-          {
-            "word": "weird",
-            "weight": -2.691
+            "weight": -2.784
           },
           {
             "word": "agitated",
-            "weight": -2.671
-          },
-          {
-            "word": "hated",
-            "weight": -2.449
+            "weight": -2.653
           },
           {
             "word": "amazed",
-            "weight": -2.432
+            "weight": -2.509
+          },
+          {
+            "word": "weird",
+            "weight": -2.506
+          },
+          {
+            "word": "hated",
+            "weight": -2.434
           },
           {
             "word": "impressed",
-            "weight": -2.355
+            "weight": -2.324
           },
           {
             "word": "caring",
-            "weight": -2.325
+            "weight": -2.309
           },
           {
             "word": "tortured",
-            "weight": -2.303
+            "weight": -2.301
           },
           {
             "word": "helpless",
-            "weight": -2.194
+            "weight": -2.273
           },
           {
-            "word": "stressed",
-            "weight": -2.145
+            "word": "dangerous",
+            "weight": -2.117
           },
           {
             "word": "pressured",
-            "weight": -2.129
+            "weight": -2.103
           }
         ]
       },
@@ -1383,203 +2507,203 @@
         "positive": [
           {
             "word": "caring",
-            "weight": 5.799
+            "weight": 5.77
           },
           {
             "word": "nostalgic",
-            "weight": 5.715
-          },
-          {
-            "word": "naughty",
-            "weight": 5.434
+            "weight": 5.705
           },
           {
             "word": "loving",
-            "weight": 5.432
+            "weight": 5.422
+          },
+          {
+            "word": "naughty",
+            "weight": 5.42
           },
           {
             "word": "sympathetic",
-            "weight": 5.356
+            "weight": 5.342
           },
           {
             "word": "longing",
-            "weight": 5.313
+            "weight": 5.293
           },
           {
             "word": "horny",
-            "weight": 5.299
-          },
-          {
-            "word": "hot",
-            "weight": 5.103
-          },
-          {
-            "word": "tender",
-            "weight": 5.069
+            "weight": 5.27
           },
           {
             "word": "lovely",
-            "weight": 5.041
+            "weight": 5.143
+          },
+          {
+            "word": "hot",
+            "weight": 5.062
+          },
+          {
+            "word": "tender",
+            "weight": 5.025
           },
           {
             "word": "liked",
-            "weight": 5.003
+            "weight": 4.976
           },
           {
             "word": "loyal",
-            "weight": 4.751
+            "weight": 4.732
           }
         ],
         "negative": [
           {
             "word": "strange",
-            "weight": -1.294
+            "weight": -1.306
           },
           {
             "word": "overwhelmed",
-            "weight": -1.229
+            "weight": -1.227
           },
           {
             "word": "weird",
-            "weight": -1.163
+            "weight": -1.18
           },
           {
             "word": "amazing",
-            "weight": -1.137
+            "weight": -1.156
           },
           {
             "word": "stressed",
-            "weight": -1.101
+            "weight": -1.096
           },
           {
             "word": "hated",
-            "weight": -1.015
+            "weight": -1.005
           },
           {
             "word": "an",
-            "weight": -0.967
+            "weight": -0.979
           },
           {
             "word": "helpless",
             "weight": -0.958
           },
           {
-            "word": "pretty",
+            "word": "tortured",
             "weight": -0.957
           },
           {
-            "word": "tortured",
-            "weight": -0.953
+            "word": "was",
+            "weight": -0.931
           },
           {
             "word": "agitated",
-            "weight": -0.93
+            "weight": -0.926
           },
           {
-            "word": "was",
-            "weight": -0.925
+            "word": "pretty",
+            "weight": -0.924
           }
         ]
       },
       "sadness": {
         "positive": [
           {
-            "word": "melancholy",
-            "weight": 4.364
+            "word": "lethargic",
+            "weight": 4.31
           },
           {
-            "word": "lethargic",
-            "weight": 4.343
+            "word": "melancholy",
+            "weight": 4.194
           },
           {
             "word": "burdened",
-            "weight": 4.102
-          },
-          {
-            "word": "unwelcome",
-            "weight": 3.876
+            "weight": 4.098
           },
           {
             "word": "missed",
-            "weight": 3.855
+            "weight": 3.861
           },
           {
-            "word": "punished",
-            "weight": 3.79
-          },
-          {
-            "word": "homesick",
-            "weight": 3.784
-          },
-          {
-            "word": "groggy",
-            "weight": 3.736
-          },
-          {
-            "word": "gloomy",
-            "weight": 3.716
-          },
-          {
-            "word": "lousy",
-            "weight": 3.713
+            "word": "unwelcome",
+            "weight": 3.834
           },
           {
             "word": "awkward",
-            "weight": 3.676
+            "weight": 3.793
+          },
+          {
+            "word": "homesick",
+            "weight": 3.774
+          },
+          {
+            "word": "miserable",
+            "weight": 3.71
+          },
+          {
+            "word": "inadequate",
+            "weight": 3.68
           },
           {
             "word": "exhausted",
-            "weight": 3.654
+            "weight": 3.665
+          },
+          {
+            "word": "discouraged",
+            "weight": 3.659
+          },
+          {
+            "word": "punished",
+            "weight": 3.658
           }
         ],
         "negative": [
           {
             "word": "strange",
-            "weight": -2.742
+            "weight": -2.668
           },
           {
             "word": "weird",
-            "weight": -2.3
+            "weight": -2.284
           },
           {
             "word": "supporting",
-            "weight": -2.238
-          },
-          {
-            "word": "accepted",
-            "weight": -2.221
+            "weight": -2.264
           },
           {
             "word": "sweet",
-            "weight": -2.215
+            "weight": -2.242
+          },
+          {
+            "word": "accepted",
+            "weight": -2.195
           },
           {
             "word": "agitated",
-            "weight": -2.159
-          },
-          {
-            "word": "tortured",
-            "weight": -2.139
-          },
-          {
-            "word": "passionate",
-            "weight": -2.138
+            "weight": -2.157
           },
           {
             "word": "overwhelmed",
-            "weight": -2.058
+            "weight": -2.154
+          },
+          {
+            "word": "tortured",
+            "weight": -2.117
+          },
+          {
+            "word": "passionate",
+            "weight": -2.074
           },
           {
             "word": "amazed",
-            "weight": -2.0
-          },
-          {
-            "word": "irritable",
-            "weight": -1.96
+            "weight": -1.956
           },
           {
             "word": "amazing",
-            "weight": -1.921
+            "weight": -1.954
+          },
+          {
+            "word": "irritable",
+            "weight": -1.941
           }
         ]
       },
@@ -1587,101 +2711,715 @@
         "positive": [
           {
             "word": "amazed",
-            "weight": 7.249
+            "weight": 7.229
           },
           {
             "word": "impressed",
-            "weight": 7.02
+            "weight": 6.991
           },
           {
             "word": "surprised",
-            "weight": 6.846
+            "weight": 6.735
           },
           {
             "word": "curious",
-            "weight": 6.385
+            "weight": 6.395
           },
           {
             "word": "shocked",
-            "weight": 6.27
+            "weight": 6.241
           },
           {
             "word": "funny",
-            "weight": 6.041
+            "weight": 6.034
           },
           {
             "word": "dazed",
-            "weight": 5.576
+            "weight": 5.544
           },
           {
             "word": "overwhelmed",
-            "weight": 5.303
+            "weight": 5.257
           },
           {
             "word": "weird",
-            "weight": 4.668
+            "weight": 4.545
           },
           {
             "word": "strange",
-            "weight": 4.584
+            "weight": 4.449
           },
           {
             "word": "amazing",
-            "weight": 4.433
+            "weight": 4.336
           },
           {
             "word": "stunned",
-            "weight": 3.881
+            "weight": 3.861
           }
         ],
         "negative": [
           {
             "word": "feel",
-            "weight": -1.041
+            "weight": -1.019
           },
           {
             "word": "more",
-            "weight": -0.842
+            "weight": -0.81
           },
           {
             "word": "to",
-            "weight": -0.689
+            "weight": -0.661
           },
           {
             "word": "your",
-            "weight": -0.631
+            "weight": -0.638
           },
           {
             "word": "stressed",
-            "weight": -0.627
+            "weight": -0.637
           },
           {
             "word": "before",
-            "weight": -0.616
+            "weight": -0.614
           },
           {
             "word": "being",
-            "weight": -0.613
-          },
-          {
-            "word": "lately",
-            "weight": -0.571
-          },
-          {
-            "word": "right",
-            "weight": -0.571
+            "weight": -0.599
           },
           {
             "word": "kind",
-            "weight": -0.565
+            "weight": -0.589
+          },
+          {
+            "word": "lately",
+            "weight": -0.576
+          },
+          {
+            "word": "right",
+            "weight": -0.575
           },
           {
             "word": "sweet",
-            "weight": -0.549
+            "weight": -0.548
           },
           {
             "word": "agitated",
-            "weight": -0.545
+            "weight": -0.542
+          }
+        ]
+      }
+    },
+    "hybrid_lr": {
+      "anger": {
+        "positive": [
+          {
+            "word": "bow__dangerous",
+            "weight": 3.263
+          },
+          {
+            "word": "bow__petty",
+            "weight": 3.179
+          },
+          {
+            "word": "syntax__anger_lex_density",
+            "weight": 3.085
+          },
+          {
+            "word": "bow__distracted",
+            "weight": 2.885
+          },
+          {
+            "word": "bow__rude",
+            "weight": 2.848
+          },
+          {
+            "word": "bow__insulted",
+            "weight": 2.816
+          },
+          {
+            "word": "bow__irritable",
+            "weight": 2.774
+          },
+          {
+            "word": "bow__selfish",
+            "weight": 2.726
+          },
+          {
+            "word": "bow__wronged",
+            "weight": 2.698
+          },
+          {
+            "word": "bow__impatient",
+            "weight": 2.603
+          },
+          {
+            "word": "bow__resentful",
+            "weight": 2.553
+          },
+          {
+            "word": "bow__bothered",
+            "weight": 2.543
+          }
+        ],
+        "negative": [
+          {
+            "word": "syntax__love_lex_density",
+            "weight": -1.167
+          },
+          {
+            "word": "bow__weird",
+            "weight": -1.156
+          },
+          {
+            "word": "bow__feel",
+            "weight": -1.09
+          },
+          {
+            "word": "bow__strange",
+            "weight": -1.075
+          },
+          {
+            "word": "syntax__joy_lex_density",
+            "weight": -1.057
+          },
+          {
+            "word": "bow__overwhelmed",
+            "weight": -0.982
+          },
+          {
+            "word": "syntax__surprise_lex_density",
+            "weight": -0.947
+          },
+          {
+            "word": "bow__accepted",
+            "weight": -0.94
+          },
+          {
+            "word": "bow__helpless",
+            "weight": -0.924
+          },
+          {
+            "word": "bow__generous",
+            "weight": -0.907
+          },
+          {
+            "word": "bow__shocked",
+            "weight": -0.833
+          },
+          {
+            "word": "bow__shaken",
+            "weight": -0.823
+          }
+        ]
+      },
+      "fear": {
+        "positive": [
+          {
+            "word": "bow__shaken",
+            "weight": 3.599
+          },
+          {
+            "word": "syntax__fear_lex_density",
+            "weight": 3.419
+          },
+          {
+            "word": "bow__pressured",
+            "weight": 3.154
+          },
+          {
+            "word": "bow__shaky",
+            "weight": 3.112
+          },
+          {
+            "word": "bow__shy",
+            "weight": 3.078
+          },
+          {
+            "word": "bow__distressed",
+            "weight": 2.921
+          },
+          {
+            "word": "bow__paranoid",
+            "weight": 2.905
+          },
+          {
+            "word": "bow__vulnerable",
+            "weight": 2.88
+          },
+          {
+            "word": "bow__reluctant",
+            "weight": 2.842
+          },
+          {
+            "word": "bow__frantic",
+            "weight": 2.839
+          },
+          {
+            "word": "bow__uncertain",
+            "weight": 2.823
+          },
+          {
+            "word": "bow__fearful",
+            "weight": 2.773
+          }
+        ],
+        "negative": [
+          {
+            "word": "bow__feel",
+            "weight": -0.938
+          },
+          {
+            "word": "syntax__love_lex_density",
+            "weight": -0.867
+          },
+          {
+            "word": "syntax__joy_lex_density",
+            "weight": -0.843
+          },
+          {
+            "word": "bow__feeling really",
+            "weight": -0.814
+          },
+          {
+            "word": "bow__supporting",
+            "weight": -0.808
+          },
+          {
+            "word": "bow__as if",
+            "weight": -0.794
+          },
+          {
+            "word": "bow__stressed",
+            "weight": -0.791
+          },
+          {
+            "word": "bow__dazed",
+            "weight": -0.769
+          },
+          {
+            "word": "syntax__first_person_ratio",
+            "weight": -0.756
+          },
+          {
+            "word": "bow__of feeling",
+            "weight": -0.739
+          },
+          {
+            "word": "bow__sweet",
+            "weight": -0.735
+          },
+          {
+            "word": "bow__generous",
+            "weight": -0.727
+          }
+        ]
+      },
+      "joy": {
+        "positive": [
+          {
+            "word": "syntax__joy_lex_density",
+            "weight": 3.236
+          },
+          {
+            "word": "bow__pleasant",
+            "weight": 2.472
+          },
+          {
+            "word": "bow__resolved",
+            "weight": 2.393
+          },
+          {
+            "word": "bow__sincere",
+            "weight": 2.282
+          },
+          {
+            "word": "bow__satisfied",
+            "weight": 2.263
+          },
+          {
+            "word": "bow__smug",
+            "weight": 2.245
+          },
+          {
+            "word": "bow__popular",
+            "weight": 2.22
+          },
+          {
+            "word": "bow__virtuous",
+            "weight": 2.2
+          },
+          {
+            "word": "bow__successful",
+            "weight": 2.191
+          },
+          {
+            "word": "bow__innocent",
+            "weight": 2.171
+          },
+          {
+            "word": "bow__amused",
+            "weight": 2.114
+          },
+          {
+            "word": "bow__divine",
+            "weight": 2.108
+          }
+        ],
+        "negative": [
+          {
+            "word": "bow__strange",
+            "weight": -1.844
+          },
+          {
+            "word": "syntax__sadness_lex_density",
+            "weight": -1.834
+          },
+          {
+            "word": "bow__agitated",
+            "weight": -1.624
+          },
+          {
+            "word": "bow__weird",
+            "weight": -1.557
+          },
+          {
+            "word": "bow__dangerous",
+            "weight": -1.477
+          },
+          {
+            "word": "syntax__anger_lex_density",
+            "weight": -1.395
+          },
+          {
+            "word": "bow__impressed",
+            "weight": -1.395
+          },
+          {
+            "word": "bow__amazed",
+            "weight": -1.384
+          },
+          {
+            "word": "bow__tortured",
+            "weight": -1.384
+          },
+          {
+            "word": "bow__lovely",
+            "weight": -1.375
+          },
+          {
+            "word": "syntax__fear_lex_density",
+            "weight": -1.364
+          },
+          {
+            "word": "bow__overwhelmed",
+            "weight": -1.345
+          }
+        ]
+      },
+      "love": {
+        "positive": [
+          {
+            "word": "syntax__love_lex_density",
+            "weight": 4.42
+          },
+          {
+            "word": "bow__naughty",
+            "weight": 3.547
+          },
+          {
+            "word": "bow__nostalgic",
+            "weight": 3.511
+          },
+          {
+            "word": "bow__hot",
+            "weight": 3.293
+          },
+          {
+            "word": "bow__delicate",
+            "weight": 3.29
+          },
+          {
+            "word": "bow__lovely",
+            "weight": 3.233
+          },
+          {
+            "word": "bow__supportive",
+            "weight": 3.216
+          },
+          {
+            "word": "bow__longing",
+            "weight": 3.194
+          },
+          {
+            "word": "bow__tender",
+            "weight": 3.102
+          },
+          {
+            "word": "bow__caring",
+            "weight": 3.077
+          },
+          {
+            "word": "bow__gentle",
+            "weight": 3.042
+          },
+          {
+            "word": "bow__sympathetic",
+            "weight": 3.026
+          }
+        ],
+        "negative": [
+          {
+            "word": "bow__strange",
+            "weight": -0.842
+          },
+          {
+            "word": "bow__overwhelmed",
+            "weight": -0.736
+          },
+          {
+            "word": "bow__amazing",
+            "weight": -0.713
+          },
+          {
+            "word": "bow__an",
+            "weight": -0.652
+          },
+          {
+            "word": "bow__funny",
+            "weight": -0.622
+          },
+          {
+            "word": "bow__agitated",
+            "weight": -0.606
+          },
+          {
+            "word": "bow__of what",
+            "weight": -0.6
+          },
+          {
+            "word": "bow__my eyes",
+            "weight": -0.599
+          },
+          {
+            "word": "bow__when my",
+            "weight": -0.585
+          },
+          {
+            "word": "bow__ache",
+            "weight": -0.584
+          },
+          {
+            "word": "bow__weird",
+            "weight": -0.581
+          },
+          {
+            "word": "bow__can",
+            "weight": -0.578
+          }
+        ]
+      },
+      "sadness": {
+        "positive": [
+          {
+            "word": "syntax__sadness_lex_density",
+            "weight": 3.774
+          },
+          {
+            "word": "bow__melancholy",
+            "weight": 2.699
+          },
+          {
+            "word": "bow__lethargic",
+            "weight": 2.648
+          },
+          {
+            "word": "bow__needy",
+            "weight": 2.573
+          },
+          {
+            "word": "bow__dull",
+            "weight": 2.481
+          },
+          {
+            "word": "bow__unfortunate",
+            "weight": 2.417
+          },
+          {
+            "word": "bow__disturbed",
+            "weight": 2.366
+          },
+          {
+            "word": "bow__unimportant",
+            "weight": 2.363
+          },
+          {
+            "word": "bow__defeated",
+            "weight": 2.35
+          },
+          {
+            "word": "bow__groggy",
+            "weight": 2.347
+          },
+          {
+            "word": "bow__abused",
+            "weight": 2.341
+          },
+          {
+            "word": "bow__pathetic",
+            "weight": 2.336
+          }
+        ],
+        "negative": [
+          {
+            "word": "bow__strange",
+            "weight": -1.619
+          },
+          {
+            "word": "bow__supporting",
+            "weight": -1.5
+          },
+          {
+            "word": "syntax__love_lex_density",
+            "weight": -1.462
+          },
+          {
+            "word": "bow__accepted",
+            "weight": -1.43
+          },
+          {
+            "word": "syntax__joy_lex_density",
+            "weight": -1.374
+          },
+          {
+            "word": "bow__sweet",
+            "weight": -1.372
+          },
+          {
+            "word": "bow__weird",
+            "weight": -1.361
+          },
+          {
+            "word": "bow__shaken",
+            "weight": -1.269
+          },
+          {
+            "word": "bow__agitated",
+            "weight": -1.253
+          },
+          {
+            "word": "bow__tortured",
+            "weight": -1.213
+          },
+          {
+            "word": "bow__faithful",
+            "weight": -1.21
+          },
+          {
+            "word": "bow__selfish",
+            "weight": -1.204
+          }
+        ]
+      },
+      "surprise": {
+        "positive": [
+          {
+            "word": "bow__impressed",
+            "weight": 4.122
+          },
+          {
+            "word": "bow__shocked",
+            "weight": 3.965
+          },
+          {
+            "word": "bow__amazed",
+            "weight": 3.814
+          },
+          {
+            "word": "bow__funny",
+            "weight": 3.769
+          },
+          {
+            "word": "bow__surprised",
+            "weight": 3.641
+          },
+          {
+            "word": "bow__curious",
+            "weight": 3.214
+          },
+          {
+            "word": "syntax__surprise_lex_density",
+            "weight": 3.173
+          },
+          {
+            "word": "bow__dazed",
+            "weight": 3.045
+          },
+          {
+            "word": "bow__overwhelmed",
+            "weight": 2.782
+          },
+          {
+            "word": "bow__weird",
+            "weight": 2.718
+          },
+          {
+            "word": "bow__amazing",
+            "weight": 2.701
+          },
+          {
+            "word": "bow__strange",
+            "weight": 2.632
+          }
+        ],
+        "negative": [
+          {
+            "word": "bow__lately",
+            "weight": -0.639
+          },
+          {
+            "word": "bow__mine",
+            "weight": -0.512
+          },
+          {
+            "word": "bow__am feel",
+            "weight": -0.479
+          },
+          {
+            "word": "bow__confess",
+            "weight": -0.46
+          },
+          {
+            "word": "bow__more",
+            "weight": -0.444
+          },
+          {
+            "word": "bow__feel that",
+            "weight": -0.437
+          },
+          {
+            "word": "bow__to feel",
+            "weight": -0.436
+          },
+          {
+            "word": "bow__strange and",
+            "weight": -0.433
+          },
+          {
+            "word": "bow__another",
+            "weight": -0.432
+          },
+          {
+            "word": "bow__and weird",
+            "weight": -0.424
+          },
+          {
+            "word": "bow__blessed",
+            "weight": -0.423
+          },
+          {
+            "word": "bow__generous",
+            "weight": -0.411
           }
         ]
       }
