@@ -268,11 +268,64 @@
          TAB 2: DATA SCIENTIST NLP RESEARCH LAB
          ========================================================= -->
     <section id="tab-research" class="hidden space-y-6">
+      <!-- Plain-English Pipeline Story & Live Sentence X-Ray -->
+      <div class="soft-panel p-6 rounded-2xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded-full bg-violet-100 text-violet-800">How Our NLP Works</span>
+              <span class="text-[11px] font-semibold text-emerald-700 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> All 7 NLP Pipelines Live</span>
+            </div>
+            <h2 class="text-lg font-extrabold text-slate-900 mt-1">How EmotiSense Reads Tone &amp; Emotion Step-by-Step</h2>
+            <p class="text-xs text-slate-500">Click any step below or try a tricky test sentence to watch how words, negations, and subwords work together.</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="runEmotionLabDemo('negation')" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition">Try Negation (&ldquo;Not Angry&rdquo;)</button>
+            <button type="button" onclick="runEmotionLabDemo('pivot')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold transition">Try Contrast Pivot</button>
+            <button type="button" onclick="runEmotionLabDemo('elongation')" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-violet-800 text-xs font-bold transition">Try Stretched Typo</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="emotion-story-steps">
+          <button type="button" onclick="selectEmotionStoryStep(1)" id="estep-1" class="soft-card p-3.5 rounded-xl text-left border-2 border-violet-600 bg-purple-50/40">
+            <div class="text-[10px] font-mono font-bold text-violet-800 uppercase">Step 1 · Clean &amp; Keep &ldquo;Not&rdquo;</div>
+            <div class="text-xs font-extrabold text-slate-900 mt-0.5">60 Conflicts Dropped</div>
+            <div class="text-[11px] text-slate-600 mt-1">Expands <code>didn&rsquo;t</code> &rarr; <code>did not</code> and keeps stopwords so negation flips aren&rsquo;t erased.</div>
+          </button>
+          <button type="button" onclick="selectEmotionStoryStep(2)" id="estep-2" class="soft-card p-3.5 rounded-xl text-left">
+            <div class="text-[10px] font-mono font-bold text-pink-700 uppercase">Step 2 · 3-Level Reading</div>
+            <div class="text-xs font-extrabold text-slate-900 mt-0.5">Words + Subwords + Cues</div>
+            <div class="text-[11px] text-slate-600 mt-1">Reads word pairs (<code>not angry</code>), character chunks (<code>happp</code>), plus 15 negation/pivot cues.</div>
+          </button>
+          <button type="button" onclick="selectEmotionStoryStep(3)" id="estep-3" class="soft-card p-3.5 rounded-xl text-left">
+            <div class="text-[10px] font-mono font-bold text-emerald-700 uppercase">Step 3 · Fair Balance</div>
+            <div class="text-xs font-extrabold text-slate-900 mt-0.5">MaxAbsScaler [0..1]</div>
+            <div class="text-[11px] text-slate-600 mt-1">Keeps sparse word weights &amp; syntax cues cleanly bounded in <code>[0..1]</code> (beats StandardScaler).</div>
+          </button>
+          <button type="button" onclick="selectEmotionStoryStep(4)" id="estep-4" class="soft-card p-3.5 rounded-xl text-left">
+            <div class="text-[10px] font-mono font-bold text-sky-700 uppercase">Step 4 · 3-Model Team</div>
+            <div class="text-xs font-extrabold text-slate-900 mt-0.5">Hybrid Ensemble (90.5%)</div>
+            <div class="text-[11px] text-slate-600 mt-1">LogReg + Calibrated LinearSVC + ComplementNB vote together (beats BoW in 97% of boot trials).</div>
+          </button>
+        </div>
+
+        <div id="emotion-story-detail" class="p-4 rounded-xl bg-purple-50/60 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-800">
+          <div>
+            <strong class="text-violet-900">Why Step 1 Matters:</strong> Many tutorials delete stopwords (&ldquo;not&rdquo;, &ldquo;never&rdquo;, &ldquo;but&rdquo;), turning &ldquo;I am <strong>not</strong> happy&rdquo; into &ldquo;happy&rdquo;! Keeping helper words &amp; expanding apostrophes like <code>didn&rsquo;t</code> &rarr; <code>did not</code> preserves the true meaning.
+          </div>
+          <button type="button" onclick="askCoachTopic('Explain simply how EmotiSense understands negations like not angry and why Hybrid Ensemble beats simple Bag of Words')" class="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-violet-800 font-bold hover:bg-purple-50">Ask NLP Tutor</button>
+        </div>
+
+        <div id="emotion-live-xray" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+          Click any tricky test button above (or click any Stress Test row below) to trace Steps 1 &rarr; 2 &rarr; 3 &rarr; 4 live!
+        </div>
+      </div>
+
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Variant B Champion</span><div id="resWinnerName" class="text-lg font-extrabold text-emerald-700 mt-1">Hybrid Ensemble</div><div id="resWinnerMetrics" class="text-xs text-slate-500">Loading CV &amp; Test metrics...</div></div>
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Macro F1 &amp; Calibration</span><div id="resMacroF1" class="text-lg font-extrabold text-violet-700 mt-1">--</div><div id="resCalSub" class="text-xs text-slate-500">Balanced across 6 classes</div></div>
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Conflict Cleanup</span><div id="resCleanup" class="text-lg font-extrabold text-amber-700 mt-1">16,000 &rarr; 15,939</div><div class="text-xs text-slate-500">60 label conflicts + 1 dup dropped</div></div>
-        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Hybrid Feature Space</span><div id="resVocabDim" class="text-lg font-extrabold text-slate-900 mt-1">--</div><div class="text-xs text-slate-500">Word(1,2) + Char(3,5) + Syntax</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">CV Champion</span><div id="resWinnerName" class="text-lg font-extrabold text-emerald-700 mt-1">Hybrid Ensemble</div><div id="resWinnerMetrics" class="text-xs text-slate-500">Loading CV &amp; Test metrics...</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Macro F1 &amp; Honesty Error</span><div id="resMacroF1" class="text-lg font-extrabold text-violet-700 mt-1">--</div><div id="resCalSub" class="text-xs text-slate-500">Balanced across 6 emotions</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Clean Dataset</span><div id="resCleanup" class="text-lg font-extrabold text-amber-700 mt-1">16,000 &rarr; 15,939</div><div class="text-xs text-slate-500">60 conflicts + 1 dup removed</div></div>
+        <div class="soft-panel p-5 rounded-2xl"><span class="text-[10px] font-mono uppercase text-slate-500">Total Signal Dimensions</span><div id="resVocabDim" class="text-lg font-extrabold text-slate-900 mt-1">--</div><div class="text-xs text-slate-500">Word + Char Subwords + Syntax</div></div>
       </div>
 
       <!-- Statistical A/B Hypothesis Suite & Live Arena -->
@@ -280,13 +333,13 @@
         <div class="lg:col-span-7 soft-panel p-6 rounded-2xl space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 class="text-base font-extrabold text-slate-900">Statistical A/B Hypothesis Suite (Held-Out n=3,188)</h2>
-              <p class="text-xs text-slate-500">McNemar exact/chi2 test + Paired Bootstrap 95% CIs (Accuracy, Macro F1, Brier Calibration).</p>
+              <h2 class="text-base font-extrabold text-slate-900">Before vs After Upgrade Proof (A/B Test on 3,188 Texts)</h2>
+              <p class="text-xs text-slate-500">Shows how often our upgraded Hybrid AI wins over simple Bag-of-Words across 600 bootstrap resamples.</p>
             </div>
             <select id="abPairSelect" onchange="renderAbStatsPanel()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-violet-800">
-              <option value="bow_vs_hybrid_ensemble">Control BoW+LR vs Hybrid Ensemble</option>
-              <option value="bow_vs_hybrid_lr">Control BoW+LR vs Hybrid Word+Char+Syntax</option>
-              <option value="bow_vs_hybrid_svc">Control BoW+LR vs Hybrid Calibrated SVC</option>
+              <option value="bow_vs_hybrid_ensemble">Old BoW+LR vs New Hybrid Ensemble</option>
+              <option value="bow_vs_hybrid_lr">Old BoW+LR vs Hybrid LogReg</option>
+              <option value="bow_vs_hybrid_svc">Old BoW+LR vs Hybrid Calibrated SVC</option>
             </select>
           </div>
           <div id="abStatsPanel" class="space-y-3">
@@ -298,12 +351,12 @@
           <div class="flex items-center justify-between gap-2">
             <div>
               <h2 class="text-base font-extrabold text-slate-900">Live Text A/B Arena</h2>
-              <p class="text-xs text-slate-500">Compare Control (Unigram BoW) vs Champion (Hybrid) on your active text.</p>
+              <p class="text-xs text-slate-500">Compare simple BoW vs Hybrid Team on any active text.</p>
             </div>
             <button onclick="runLiveAbArena()" class="px-3 py-1.5 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold shrink-0">Run Live A/B</button>
           </div>
           <div id="liveAbArena" class="space-y-2.5 text-xs text-slate-500">
-            Analyze a sentence in Studio or click <strong>Run Live A/B</strong> to run Control vs Variant B side-by-side.
+            Analyze a sentence in Studio or click <strong>Run Live A/B</strong> above to compare Control vs Hybrid side-by-side.
           </div>
         </div>
       </div>
@@ -312,8 +365,12 @@
       <div class="soft-panel p-6 rounded-2xl space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900">NLP Feature Extraction &amp; Scaling Ablation Study (5-Fold CV)</h3>
-            <p class="text-xs text-slate-500">Progressive lift from Unigram BoW &rarr; Sublinear Word(1,2) &rarr; Char-WB(3,5) Subwords &rarr; Scaled Affective Negation Syntax.</p>
+            <h3 class="text-base font-extrabold text-slate-900">Step-by-Step Upgrade Experiment (What Helped Accuracy Most?)</h3>
+            <p class="text-xs text-slate-500">Click metric buttons to compare CV, Test, or Macro F1 across each NLP feature upgrade.</p>
+          </div>
+          <div class="flex gap-1 bg-purple-50 p-1 rounded-lg text-[10px] font-bold border border-purple-200">
+            <button type="button" onclick="setEmotionAblationMetric('both')" id="eabl-btn-both" class="px-2.5 py-1 rounded bg-white text-violet-800 shadow-sm">CV &amp; Test %</button>
+            <button type="button" onclick="setEmotionAblationMetric('f1')" id="eabl-btn-f1" class="px-2.5 py-1 rounded text-slate-600">Macro F1 %</button>
           </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
@@ -328,13 +385,25 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="soft-panel p-5 rounded-2xl">
-          <h3 class="text-sm font-extrabold text-slate-900 mb-3">5-Fold CV Accuracy Stability Across Challengers</h3>
-          <div class="h-64"><canvas id="benchFoldsChart"></canvas></div>
+        <div class="soft-panel p-5 rounded-2xl space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-extrabold text-slate-900">1. Consistency Across 5 Unseen Data Splits</h3>
+            <div class="flex gap-1 bg-purple-50 p-0.5 rounded-lg text-[10px] font-bold border border-purple-100">
+              <button type="button" onclick="setEmotionFoldsFilter('top')" id="efold-btn-top" class="px-2 py-1 rounded bg-white text-violet-800 shadow-sm">Top 4</button>
+              <button type="button" onclick="setEmotionFoldsFilter('all')" id="efold-btn-all" class="px-2 py-1 rounded text-slate-600">All 7</button>
+            </div>
+          </div>
+          <div class="h-60"><canvas id="benchFoldsChart"></canvas></div>
+          <p class="text-[11px] text-slate-600 bg-purple-50/40 p-2.5 rounded-lg border border-purple-100">
+            <strong>Logic:</strong> Notice Hybrid SVC (<code>88.8%</code>) and Hybrid Ensemble stay flat and steady across all 5 splits, beating naive Bayes baselines by <code>+16&ndash;26%</code>.
+          </p>
         </div>
-        <div class="soft-panel p-5 rounded-2xl">
-          <h3 class="text-sm font-extrabold text-slate-900 mb-3">Confidence Calibration Reliability (10-Bin ECE &amp; Brier)</h3>
-          <div class="h-64"><canvas id="calibrationChart"></canvas></div>
+        <div class="soft-panel p-5 rounded-2xl space-y-2.5">
+          <h3 class="text-sm font-extrabold text-slate-900">2. Confidence Honesty Check (10-Bin Calibration Curve)</h3>
+          <div class="h-60"><canvas id="calibrationChart"></canvas></div>
+          <p class="text-[11px] text-slate-600 bg-purple-50/40 p-2.5 rounded-lg border border-purple-100">
+            <strong>Logic:</strong> Staying close to the dashed diagonal means when EmotiSense predicts <em>&ldquo;80% confident&rdquo;</em>, it is right ~80% of the time &mdash; not overconfident!
+          </p>
         </div>
       </div>
 
@@ -342,14 +411,14 @@
       <div class="soft-panel p-6 rounded-2xl space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900">Adversarial Negation, Pivot &amp; Rare-Class Stress Suite (Control vs Champion)</h3>
-            <p class="text-xs text-slate-500">Curated edge cases testing negation flips (&ldquo;did not feel angry&rdquo;), contrast pivots (&ldquo;terrified ... but thrilled&rdquo;), character elongations, and minority classes.</p>
+            <h3 class="text-base font-extrabold text-slate-900">Tricky Sentence Stress Tests (Click Any Row to Test It Live Above!)</h3>
+            <p class="text-xs text-slate-500">Click any row below to load it into the Live A/B Arena and watch how Hybrid features catch contrast pivots &amp; negation.</p>
           </div>
           <span id="stressPassBadge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">--</span>
         </div>
         <div class="overflow-x-auto max-h-80">
           <table class="w-full text-left text-xs border-collapse">
-            <thead class="bg-purple-50 text-slate-600 sticky top-0 border-b border-purple-100"><tr><th class="p-2.5">Case</th><th class="p-2.5">Test Sentence</th><th class="p-2.5">Expected</th><th class="p-2.5">Control (BoW+LR)</th><th class="p-2.5">Variant B (Hybrid)</th></tr></thead>
+            <thead class="bg-purple-50 text-slate-600 sticky top-0 border-b border-purple-100"><tr><th class="p-2.5">Case</th><th class="p-2.5">Test Sentence</th><th class="p-2.5">Expected</th><th class="p-2.5">Control (BoW+LR)</th><th class="p-2.5">Variant B (Hybrid)</th><th class="p-2.5 text-right">Try</th></tr></thead>
             <tbody id="stressSuiteTbody" class="divide-y divide-slate-200"></tbody>
           </table>
         </div>
@@ -358,7 +427,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="soft-panel p-5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-extrabold text-slate-900">6&times;6 Held-Out Confusion Matrix</h3>
+            <h3 class="text-sm font-extrabold text-slate-900">6&times;6 Mistake Map (Click Any Box to Inspect)</h3>
             <select id="cmModelSelect" onchange="renderMatrixAndReport()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-violet-800">
               <option value="hybrid_ensemble" selected>Hybrid Ensemble</option>
               <option value="hybrid_lr">Hybrid Word+Char+Syntax + LR</option>
@@ -370,6 +439,9 @@
             </select>
           </div>
           <div id="confusionMatrixGrid" class="overflow-x-auto"></div>
+          <div id="cmClickInsight" class="text-[11px] text-slate-700 bg-purple-50/50 p-2.5 rounded-lg border border-purple-100">
+            <strong>Click any square</strong> inside the 6&times;6 grid (green = exact match, red = confusion) for a plain-English summary!
+          </div>
         </div>
         <div class="soft-panel p-5 rounded-2xl">
           <h3 class="text-sm font-extrabold text-slate-900 mb-3">Per-Emotion Precision, Recall &amp; F1-Score</h3>
@@ -386,8 +458,8 @@
       <div class="soft-panel p-6 rounded-2xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900">Learned Classifier Weight Explorer (Top Predictive N-Grams &amp; Syntax)</h3>
-            <p class="text-xs text-slate-500">Inspect strongest positive &amp; opposing coefficients learned by Logistic Regression or Hybrid Word+Char+Syntax models.</p>
+            <h3 class="text-base font-extrabold text-slate-900">Learned Clue Explorer (Click Any Word Chip to Test It in Studio!)</h3>
+            <p class="text-xs text-slate-500">Green clues push confidence UP toward that emotion; coral clues push AWAY.</p>
           </div>
           <div class="flex gap-2">
             <select id="vocabModelSelect" onchange="renderVocabExplorer()" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold">
@@ -406,8 +478,8 @@
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-emerald-700 mb-2">Top Positive Coefficients (Pull Toward Class)</div><div id="vocabPosList" class="flex flex-wrap gap-1.5"></div></div>
-          <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-rose-700 mb-2">Top Negative Coefficients (Pull Away From Class)</div><div id="vocabNegList" class="flex flex-wrap gap-1.5"></div></div>
+          <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-emerald-700 mb-2">Top Positive Clues (Click Any Word)</div><div id="vocabPosList" class="flex flex-wrap gap-1.5"></div></div>
+          <div class="soft-card p-4 rounded-xl"><div class="text-xs font-bold text-rose-700 mb-2">Top Opposing Clues</div><div id="vocabNegList" class="flex flex-wrap gap-1.5"></div></div>
         </div>
       </div>
     </section>
@@ -473,17 +545,19 @@
   </main>
 
   <!-- Floating EmotiCoach Trigger -->
-  <button onclick="toggleAgentDrawer()" class="fixed bottom-5 right-5 z-40 px-4 py-3 rounded-full bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-xl flex items-center gap-2 transition transform hover:scale-105">
+  <button id="agent-fab-btn" title="Click to open · Drag to move" class="agent-fab fixed bottom-5 right-5 z-40 px-4 py-3 rounded-full bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-xl flex items-center gap-2 transition transform hover:scale-105 cursor-grab active:cursor-grabbing" style="touch-action:none;">
+    <i data-lucide="grip-vertical" class="w-3.5 h-3.5 opacity-75"></i>
     <i data-lucide="bot" class="w-4 h-4"></i>
     <span>EmotiCoach AI</span>
   </button>
 
   <!-- Proactive Pop-Out 1-on-1 EmotiCoach Concierge -->
   <aside id="agent-drawer" class="agent-drawer closed fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[410px] h-[530px] max-h-[78vh] z-50 soft-panel rounded-2xl border border-purple-200 flex flex-col overflow-hidden shadow-2xl">
-    <div class="p-3.5 bg-gradient-to-r from-violet-700 to-pink-600 text-white flex items-center justify-between">
+    <div id="agent-drag-handle" title="Drag header to move chat window · Double-click to reset dock" class="p-3.5 bg-gradient-to-r from-violet-700 to-pink-600 text-white flex items-center justify-between cursor-grab active:cursor-grabbing select-none" style="touch-action:none;">
       <div class="flex items-center gap-2.5">
+        <i data-lucide="grip-vertical" class="w-4 h-4 text-purple-200/80 shrink-0"></i>
         <div class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center"><i data-lucide="bot" class="w-4 h-4 text-white"></i></div>
-        <div><h3 class="text-sm font-bold leading-tight">EmotiCoach AI</h3><p class="text-[10px] text-purple-100">Active Guide · Explains Tone &amp; NLP</p></div>
+        <div><h3 class="text-sm font-bold leading-tight">EmotiCoach AI</h3><p class="text-[10px] text-purple-100">Drag to Move · Explains Tone &amp; NLP</p></div>
       </div>
       <div class="flex items-center gap-1">
         <button onclick="openAgentSettings()" title="LLM Key Settings" class="p-1.5 rounded-lg hover:bg-white/15"><i data-lucide="key-round" class="w-3.5 h-3.5"></i></button>

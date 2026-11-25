@@ -1,12 +1,12 @@
 'use strict';
 
 const EMOTION_META = {
-  sadness:  { emoji: '😢', color: '#2563eb' },
-  anger:    { emoji: '😠', color: '#dc2626' },
-  love:     { emoji: '❤️', color: '#db2777' },
+  sadness: { emoji: '😢', color: '#2563eb' },
+  anger: { emoji: '😠', color: '#dc2626' },
+  love: { emoji: '❤️', color: '#db2777' },
   surprise: { emoji: '😲', color: '#0d9488' },
-  fear:     { emoji: '😨', color: '#7c3aed' },
-  joy:      { emoji: '😄', color: '#d97706' },
+  fear: { emoji: '😨', color: '#7c3aed' },
+  joy: { emoji: '😄', color: '#d97706' },
 };
 
 const CHIP_SAMPLES = {
@@ -33,11 +33,14 @@ let batchChart = null;
 let benchFoldsChart = null;
 let ablationChart = null;
 let calibrationChart = null;
+let emotionAblationMetric = 'both';
+let emotionFoldsMode = 'top';
 
 const $ = id => document.getElementById(id);
 
 window.addEventListener('DOMContentLoaded', async () => {
   lucide.createIcons();
+  initDraggableChatbot('agent-drawer', 'agent-drag-handle', 'agent-fab-btn', 'emoti_chat_pos');
   loadSavedAgentSettings();
   renderHistory();
   renderSessionChart();
@@ -288,6 +291,51 @@ function renderSessionChart() {
 }
 
 /* ---------------- NLP Research & A/B Lab ---------------- */
+const EMOTION_STORY_TEXT = {
+  1: '<strong>Why Step 1 Matters:</strong> Many beginner scripts strip stopwords (&ldquo;not&rdquo;, &ldquo;never&rdquo;, &ldquo;but&rdquo;), turning &ldquo;I am <strong>not</strong> happy&rdquo; into &ldquo;happy&rdquo;! Keeping helper words &amp; expanding apostrophes like <code>didn&rsquo;t</code> &rarr; <code>did not</code> preserves the true meaning.',
+  2: '<strong>Why Step 2 Matters:</strong> Single-word Bag-of-Words fails on sarcasm &amp; mixed sentences. Our <code>FeatureUnion</code> blends word pairs (<code>did not feel</code>), character chunks (<code>happp</code> for typos/stretches), and 15 negation/pivot guard cues simultaneously.',
+  3: '<strong>Why Step 3 Matters:</strong> Raw counts &amp; TF-IDF vectors sit on tiny decimals while word counts reach 3&ndash;4. Scaling with <strong>MaxAbsScaler [0..1]</strong> keeps sparsity intact and outperforms StandardScaler (`88.80%` CV vs `88.24%` CV).',
+  4: '<strong>Why Step 4 Matters:</strong> Combining <strong>Logistic Regression</strong>, <strong>Calibrated LinearSVC</strong>, and <strong>ComplementNB</strong> cuts probability error (<code>Brier -0.0185</code>) and wins over the old BoW baseline in <strong>97%</strong> of bootstrap resamples.',
+};
+
+function selectEmotionStoryStep(step) {
+  [1, 2, 3, 4].forEach(i => {
+    const el = $(`estep-${i}`);
+    if (!el) return;
+    el.className = i === step
+      ? 'soft-card p-3.5 rounded-xl text-left border-2 border-violet-600 bg-purple-50/40'
+      : 'soft-card p-3.5 rounded-xl text-left hover:border-violet-300';
+  });
+  const det = $('emotion-story-detail');
+  if (det) {
+    det.innerHTML = `<div>${EMOTION_STORY_TEXT[step] || ''}</div><button type="button" onclick="askCoachTopic('Explain simply how EmotiSense understands negations like not angry and why Hybrid Ensemble beats simple Bag of Words')" class="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-violet-800 font-bold hover:bg-purple-50">Ask NLP Tutor</button>`;
+  }
+}
+
+async function runEmotionLabDemo(kind) {
+  const map = {
+    negation: "I didn't feel angry at all, actually I felt relieved and grateful!",
+    pivot: 'I was terrified before the surgery, but ended up thrilled and smiling afterward!',
+    elongation: 'Wait what?! I am sooooo happpppy and stunned we actually won!',
+  };
+  const txt = map[kind] || map.negation;
+  await runLiveAbArena(txt);
+}
+
+function setEmotionAblationMetric(mode) {
+  emotionAblationMetric = mode;
+  $('eabl-btn-both').className = mode === 'both' ? 'px-2.5 py-1 rounded bg-white text-violet-800 shadow-sm' : 'px-2.5 py-1 rounded text-slate-600';
+  $('eabl-btn-f1').className = mode === 'f1' ? 'px-2.5 py-1 rounded bg-white text-violet-800 shadow-sm' : 'px-2.5 py-1 rounded text-slate-600';
+  drawEmotionAblationChart();
+}
+
+function setEmotionFoldsFilter(mode) {
+  emotionFoldsMode = mode;
+  $('efold-btn-top').className = mode === 'top' ? 'px-2 py-1 rounded bg-white text-violet-800 shadow-sm' : 'px-2 py-1 rounded text-slate-600';
+  $('efold-btn-all').className = mode === 'all' ? 'px-2 py-1 rounded bg-white text-violet-800 shadow-sm' : 'px-2 py-1 rounded text-slate-600';
+  drawEmotionFoldsChart();
+}
+
 function renderAbStatsPanel() {
   const box = $('abStatsPanel');
   const pairKey = $('abPairSelect')?.value || 'bow_vs_hybrid_ensemble';
@@ -298,15 +346,15 @@ function renderAbStatsPanel() {
   const c = mc.contingency || {};
   box.innerHTML = `
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Acc Delta (95% CI)</div><div class="text-sm font-extrabold ${bt.accuracy_delta_pct?.mean >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${bt.accuracy_delta_pct?.mean >= 0 ? '+' : ''}${bt.accuracy_delta_pct?.mean}%</div><div class="text-[10px] font-mono text-slate-500">[${bt.accuracy_delta_pct?.ci_low}%, +${bt.accuracy_delta_pct?.ci_high}%]</div></div>
-      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Macro F1 Delta</div><div class="text-sm font-extrabold ${bt.macro_f1_delta_pct?.mean >= 0 ? 'text-violet-700' : 'text-rose-700'} mt-0.5">${bt.macro_f1_delta_pct?.mean >= 0 ? '+' : ''}${bt.macro_f1_delta_pct?.mean}%</div><div class="text-[10px] font-mono text-slate-500">${bt.prob_variant_beats_control_f1}% Boot Win</div></div>
-      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">McNemar Test</div><div class="text-sm font-extrabold text-slate-900 mt-0.5">p = ${mc.p_value}</div><div class="text-[10px] font-mono text-slate-500">${mc.significant_alpha_05 ? 'Significant (<0.05)' : 'Discordant Δ ' + mc.net_wins_for_variant}</div></div>
-      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Brier Calibration</div><div class="text-sm font-extrabold text-emerald-700 mt-0.5">${bt.brier_delta?.mean}</div><div class="text-[10px] font-mono text-slate-500">Control ${bt.brier_control?.mean} -> Var ${bt.brier_variant?.mean}</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Accuracy Gain (95% CI)</div><div class="text-sm font-extrabold ${bt.accuracy_delta_pct?.mean >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${bt.accuracy_delta_pct?.mean >= 0 ? '+' : ''}${bt.accuracy_delta_pct?.mean}%</div><div class="text-[10px] font-mono text-slate-500">${bt.prob_variant_beats_control_acc}% Boot Win</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Balanced Macro F1</div><div class="text-sm font-extrabold ${bt.macro_f1_delta_pct?.mean >= 0 ? 'text-violet-700' : 'text-rose-700'} mt-0.5">${bt.macro_f1_delta_pct?.mean >= 0 ? '+' : ''}${bt.macro_f1_delta_pct?.mean}%</div><div class="text-[10px] font-mono text-slate-500">${bt.prob_variant_beats_control_f1}% Boot Win</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">McNemar Test</div><div class="text-sm font-extrabold text-slate-900 mt-0.5">p = ${mc.p_value}</div><div class="text-[10px] font-mono text-slate-500">${mc.net_wins_for_variant >= 0 ? '+' : ''}${mc.net_wins_for_variant} net discordant</div></div>
+      <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500">Honesty Error Drop</div><div class="text-sm font-extrabold text-emerald-700 mt-0.5">${bt.brier_delta?.mean}</div><div class="text-[10px] font-mono text-slate-500">BoW ${bt.brier_control?.mean} &rarr; Var ${bt.brier_variant?.mean}</div></div>
     </div>
     <div class="grid grid-cols-4 gap-2 text-center text-[11px] pt-1">
-      <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200"><div class="font-mono font-bold text-emerald-800">${c.both_correct}</div><div class="text-slate-600">Both Correct</div></div>
-      <div class="p-2 rounded-lg bg-violet-50 border border-violet-200"><div class="font-mono font-bold text-violet-800">${c.variant_only_correct}</div><div class="text-slate-600">Hybrid Only Won</div></div>
-      <div class="p-2 rounded-lg bg-amber-50 border border-amber-200"><div class="font-mono font-bold text-amber-800">${c.control_only_correct}</div><div class="text-slate-600">BoW Only Won</div></div>
+      <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-200"><div class="font-mono font-bold text-emerald-800">${c.both_correct}</div><div class="text-slate-600">Both Got Right</div></div>
+      <div class="p-2 rounded-lg bg-violet-50 border border-violet-200"><div class="font-mono font-bold text-violet-800">${c.variant_only_correct}</div><div class="text-slate-600">Hybrid AI Fixed</div></div>
+      <div class="p-2 rounded-lg bg-amber-50 border border-amber-200"><div class="font-mono font-bold text-amber-800">${c.control_only_correct}</div><div class="text-slate-600">Old BoW Only</div></div>
       <div class="p-2 rounded-lg bg-slate-100 border border-slate-200"><div class="font-mono font-bold text-slate-700">${c.both_wrong}</div><div class="text-slate-600">Both Missed</div></div>
     </div>
   `;
@@ -314,6 +362,7 @@ function renderAbStatsPanel() {
 
 async function runLiveAbArena(overrideText) {
   const box = $('liveAbArena');
+  const xray = $('emotion-live-xray');
   if (!box) return;
   const txt = (overrideText || $('textInput').value || CHIP_SAMPLES.negation).trim();
   try {
@@ -328,26 +377,67 @@ async function runLiveAbArena(overrideText) {
     box.innerHTML = `
       <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700 italic truncate">&ldquo;${escapeHtml(d.text)}&rdquo;</div>
       <div class="grid grid-cols-2 gap-2.5">
-        <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500 uppercase">Control: BoW+LR</div><div class="text-lg font-extrabold capitalize mt-0.5" style="color:${cm.color}">${cm.emoji} ${d.control.emotion}</div><div class="text-[11px] font-mono text-slate-600">${d.control.confidence.toFixed(1)}%</div></div>
-        <div class="soft-card p-3 rounded-xl bg-purple-50/70 border-purple-200"><div class="text-[10px] font-mono text-violet-800 uppercase">Variant B: Hybrid</div><div class="text-lg font-extrabold capitalize mt-0.5" style="color:${vm.color}">${vm.emoji} ${d.variant.emotion}</div><div class="text-[11px] font-mono text-violet-800">${d.variant.confidence.toFixed(1)}%</div></div>
+        <div class="soft-card p-3 rounded-xl"><div class="text-[10px] font-mono text-slate-500 uppercase">Old Control: BoW+LR</div><div class="text-lg font-extrabold capitalize mt-0.5" style="color:${cm.color}">${cm.emoji} ${d.control.emotion}</div><div class="text-[11px] font-mono text-slate-600">${d.control.confidence.toFixed(1)}%</div></div>
+        <div class="soft-card p-3 rounded-xl bg-purple-50/70 border-purple-200"><div class="text-[10px] font-mono text-violet-800 uppercase">New Variant B: Hybrid</div><div class="text-lg font-extrabold capitalize mt-0.5" style="color:${vm.color}">${vm.emoji} ${d.variant.emotion}</div><div class="text-[11px] font-mono text-violet-800">${d.variant.confidence.toFixed(1)}%</div></div>
       </div>
       <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-[11px]">
         <span>Confidence Shift: <strong class="font-mono">${d.confidence_delta > 0 ? '+' : ''}${d.confidence_delta}%</strong></span>
-        <span class="font-bold ${d.decision_flip ? 'text-amber-700' : 'text-emerald-700'}">${d.decision_flip ? 'Decision Flipped by Hybrid Features!' : 'Same Class Consensus'}</span>
+        <span class="font-bold ${d.decision_flip ? 'text-amber-700' : 'text-emerald-700'}">${d.decision_flip ? 'Hybrid Fixed / Flipped Outcome!' : 'Both Models Agree'}</span>
       </div>
     `;
+    if (xray) {
+      const syn = d.syntax_signals || {};
+      const cues = [
+        syn.negations_found?.length ? `Neg: ${syn.negations_found.join(',')}` : '',
+        syn.pivot_cues?.length ? `Pivot: ${syn.pivot_cues.join(',')}` : '',
+        syn.intensifiers?.length ? `Boost: ${syn.intensifiers.join(',')}` : '',
+      ].filter(Boolean).join(' · ') || 'Standard Lexical Clues';
+      const topW = (d.variant.top_positive_words || []).slice(0, 3).map(w => w.word).join(', ') || 'Subwords';
+      xray.innerHTML = `<div class="flex flex-wrap items-center gap-2 text-[11px]"><span class="font-extrabold text-violet-900">Live X-Ray:</span><span class="px-2 py-0.5 rounded bg-white border border-purple-200"><strong>1. Clean:</strong> &ldquo;${escapeHtml(d.variant.cleaned_text.slice(0, 52))}&rdquo;</span><span>&rarr;</span><span class="px-2 py-0.5 rounded bg-white border border-purple-200"><strong>2. Signals:</strong> ${escapeHtml(cues)} | Clues: ${escapeHtml(topW)}</span><span>&rarr;</span><span class="px-2 py-0.5 rounded bg-purple-100 text-violet-900 font-bold border border-purple-200"><strong>4. Team Vote:</strong> ${vm.emoji} ${capitalise(d.variant.emotion)} (${d.variant.confidence}%)</span></div>`;
+    }
   } catch (err) { console.error(err); }
+}
+
+function drawEmotionAblationChart() {
+  const ablation = benchmarksData?.ablation || [];
+  if (!$('ablationChart') || !ablation.length) return;
+  if (ablationChart) ablationChart.destroy();
+  const datasets = emotionAblationMetric === 'f1'
+    ? [
+        { label: 'CV Macro F1 %', data: ablation.map(a => a.cv_macro_f1), backgroundColor: '#7c3aed', borderRadius: 4 },
+        { label: 'Test Macro F1 %', data: ablation.map(a => a.test_macro_f1), backgroundColor: '#db2777', borderRadius: 4 },
+      ]
+    : [
+        { label: '5-Fold CV Acc %', data: ablation.map(a => a.cv_accuracy), backgroundColor: '#7c3aed', borderRadius: 4 },
+        { label: 'Held-Out Test %', data: ablation.map(a => a.test_accuracy), backgroundColor: '#059669', borderRadius: 4 },
+      ];
+  ablationChart = new Chart($('ablationChart'), {
+    type: 'bar',
+    data: { labels: ablation.map(a => a.stage.replace(/^\d+\.\s*/, '')), datasets },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { x: { min: 70, max: 96 } } },
+  });
+}
+
+function drawEmotionFoldsChart() {
+  if (!benchmarksData?.benchmarks) return;
+  const rows = emotionFoldsMode === 'top' ? benchmarksData.benchmarks.slice(0, 4) : benchmarksData.benchmarks;
+  const colors = ['#6d28d9', '#db2777', '#0d9488', '#0284c7', '#d97706', '#9333ea', '#64748b'];
+  if (benchFoldsChart) benchFoldsChart.destroy();
+  benchFoldsChart = new Chart($('benchFoldsChart'), {
+    type: 'line',
+    data: { labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'], datasets: rows.map((b, i) => ({ label: b.model.replace('Hybrid BoW+TFIDF+Char+Syntax + ', 'Hybrid '), data: (b.cv_fold_accuracies || []).map(v => +(v * 100).toFixed(2)), borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], borderWidth: 2, tension: 0.25 })) },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { y: { min: emotionFoldsMode === 'top' ? 80 : 55, max: 96 } } },
+  });
 }
 
 function renderResearchLab() {
   if (!benchmarksData?.benchmarks) return;
   renderAbStatsPanel();
   runLiveAbArena();
-  const rows = benchmarksData.benchmarks;
-  const colors = ['#6d28d9', '#db2777', '#0d9488', '#0284c7', '#d97706', '#9333ea', '#64748b'];
-  if (benchFoldsChart) benchFoldsChart.destroy();
-  benchFoldsChart = new Chart($('benchFoldsChart'), { type: 'line', data: { labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'], datasets: rows.map((b, i) => ({ label: b.model, data: (b.cv_fold_accuracies || []).map(v => +(v * 100).toFixed(2)), borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.25 })) }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 55, max: 96 } } } });
+  drawEmotionFoldsChart();
+  drawEmotionAblationChart();
 
+  const rows = benchmarksData.benchmarks;
   const ablation = benchmarksData.ablation || [];
   if ($('ablationTbody') && ablation.length) {
     $('ablationTbody').innerHTML = ablation.map((r, i) => `
@@ -361,20 +451,6 @@ function renderResearchLab() {
       </tr>
     `).join('');
   }
-  if ($('ablationChart') && ablation.length) {
-    if (ablationChart) ablationChart.destroy();
-    ablationChart = new Chart($('ablationChart'), {
-      type: 'bar',
-      data: {
-        labels: ablation.map(a => a.stage.replace(/^\d+\.\s*/, '')),
-        datasets: [
-          { label: '5-Fold CV Acc %', data: ablation.map(a => a.cv_accuracy), backgroundColor: '#7c3aed', borderRadius: 4 },
-          { label: 'Held-Out Test %', data: ablation.map(a => a.test_accuracy), backgroundColor: '#059669', borderRadius: 4 },
-        ],
-      },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { min: 75, max: 96 } } },
-    });
-  }
 
   const ens = rows.find(r => r.key === 'hybrid_ensemble');
   const bow = rows.find(r => r.key === 'bow_lr');
@@ -385,30 +461,52 @@ function renderResearchLab() {
       data: {
         datasets: [
           { label: `Hybrid Ensemble (ECE ${ens.ece})`, data: ens.reliability_bins.map(b => ({ x: b.mean_conf, y: b.empirical_acc })), borderColor: '#6d28d9', backgroundColor: '#6d28d9', pointRadius: 4, tension: 0.2 },
-          { label: `Control BoW+LR (ECE ${bow.ece})`, data: bow.reliability_bins.map(b => ({ x: b.mean_conf, y: b.empirical_acc })), borderColor: '#db2777', backgroundColor: '#db2777', pointRadius: 3, tension: 0.2 },
-          { label: 'Ideal Calibration', data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], borderColor: '#cbd5e1', borderDash: [4, 4], pointRadius: 0 },
+          { label: `Old BoW+LR (ECE ${bow.ece})`, data: bow.reliability_bins.map(b => ({ x: b.mean_conf, y: b.empirical_acc })), borderColor: '#db2777', backgroundColor: '#db2777', pointRadius: 3, tension: 0.2 },
+          { label: 'Ideal Honesty', data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], borderColor: '#cbd5e1', borderDash: [4, 4], pointRadius: 0 },
         ],
       },
-      options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', min: 0, max: 1 }, y: { min: 0, max: 1 } } },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { x: { type: 'linear', min: 0, max: 1, title: { display: true, text: 'AI Confidence' } }, y: { min: 0, max: 1, title: { display: true, text: 'Actual Right Rate' } } } },
     });
   }
 
   const stress = benchmarksData.stress_suite;
   if ($('stressSuiteTbody') && stress?.cases) {
-    $('stressPassBadge').textContent = `Control ${stress.control_pass_count}/${stress.total} vs Hybrid ${stress.variant_pass_count}/${stress.total}`;
-    $('stressSuiteTbody').innerHTML = stress.cases.map(c => `
-      <tr>
+    $('stressPassBadge').textContent = `Old BoW ${stress.control_pass_count}/${stress.total} vs New Hybrid ${stress.variant_pass_count}/${stress.total}`;
+    $('stressSuiteTbody').innerHTML = stress.cases.map(c => {
+      const encTxt = encodeURIComponent(c.text);
+      return `
+      <tr onclick="runLiveAbArena(decodeURIComponent('${encTxt}'))" class="cursor-pointer hover:bg-purple-50/50 transition">
         <td class="p-2.5 font-bold text-slate-800">${escapeHtml(c.category)}</td>
         <td class="p-2.5 text-slate-600 max-w-xs truncate" title="${escapeHtml(c.text)}">${escapeHtml(c.text)}</td>
         <td class="p-2.5 font-bold capitalize">${c.expected}</td>
         <td class="p-2.5 font-mono ${c.control_pass ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'}">${c.control_pass ? '✓' : '✗'} ${c.control_pred} (${c.control_conf}%)</td>
         <td class="p-2.5 font-mono ${c.variant_pass ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'}">${c.variant_pass ? '✓' : '✗'} ${c.variant_pred} (${c.variant_conf}%)</td>
-      </tr>
-    `).join('');
+        <td class="p-2.5 text-right"><button type="button" onclick="event.stopPropagation();loadStressInStudio('${encTxt}')" class="px-2 py-1 rounded bg-violet-100 hover:bg-violet-200 text-violet-900 text-[10px] font-bold">Studio</button></td>
+      </tr>`;
+    }).join('');
   }
 
   renderMatrixAndReport(); renderVocabExplorer();
 }
+
+function loadStressInStudio(enc) {
+  const txt = decodeURIComponent(enc);
+  switchTab('studio');
+  $('textInput').value = txt;
+  $('charCount').textContent = txt.length;
+  runPredictionSubmit();
+}
+
+function inspectConfusionCell(actLbl, predLbl, count) {
+  const box = $('cmClickInsight');
+  if (!box) return;
+  if (actLbl === predLbl) {
+    box.innerHTML = `<strong class="text-emerald-800">Exact Match (${count} cases):</strong> The model correctly recognized <strong>${capitalise(actLbl)}</strong> ${count} times on unseen test texts.`;
+  } else {
+    box.innerHTML = `<strong class="text-rose-800">Confusion (${count} cases):</strong> Sentences truly labeled <strong>${capitalise(actLbl)}</strong> were mistaken for <strong>${capitalise(predLbl)}</strong> (${count} times) because these two feelings share overlapping words.`;
+  }
+}
+
 function renderMatrixAndReport() {
   if (!benchmarksData?.benchmarks) return;
   const b = benchmarksData.benchmarks.find(r => r.key === $('cmModelSelect').value) || benchmarksData.benchmarks[0];
@@ -421,7 +519,7 @@ function renderMatrixAndReport() {
     row.forEach((val, cIdx) => {
       const ratio = val / maxVal;
       const bg = rIdx === cIdx ? `rgba(16, 185, 129, ${Math.max(0.16, ratio * 0.85)})` : `rgba(244, 63, 94, ${Math.max(0.06, ratio * 0.65)})`;
-      html += `<td class="cm-cell text-slate-900" style="background:${bg}">${val}</td>`;
+      html += `<td onclick="inspectConfusionCell('${labels[rIdx]}','${labels[cIdx]}',${val})" class="cm-cell text-slate-900 cursor-pointer hover:ring-2 hover:ring-violet-500 transition" style="background:${bg}">${val}</td>`;
     });
     html += '</tr>';
   });
@@ -429,11 +527,19 @@ function renderMatrixAndReport() {
   $('confusionMatrixGrid').innerHTML = html;
   $('perClassTbody').innerHTML = labels.map(lbl => { const pc = b.per_class[lbl]; const m = EMOTION_META[lbl] || { emoji: '🤖', color: '#6d28d9' }; return `<tr><td class="p-3 font-bold capitalize" style="color:${m.color}">${m.emoji} ${lbl}</td><td class="p-3 font-mono">${(pc.precision * 100).toFixed(2)}%</td><td class="p-3 font-mono">${(pc.recall * 100).toFixed(2)}%</td><td class="p-3 font-mono font-bold text-slate-900">${(pc.f1 * 100).toFixed(2)}%</td><td class="p-3 font-mono text-slate-500">${pc.support}</td></tr>`; }).join('');
 }
+
+function testClueWord(encodedWord, emo) {
+  const cleanWord = decodeURIComponent(encodedWord).replace(/^(?:word__|bow__|char__|syntax__)/, '').trim();
+  const sample = `Today I feel really ${cleanWord} about how everything went.`;
+  loadStressInStudio(encodeURIComponent(sample));
+}
+
 function renderVocabExplorer() {
   if (!benchmarksData?.top_tokens) return;
-  const data = benchmarksData.top_tokens?.[$('vocabModelSelect').value]?.[$('vocabEmotionSelect').value];
+  const emo = $('vocabEmotionSelect').value;
+  const data = benchmarksData.top_tokens?.[$('vocabModelSelect').value]?.[emo];
   if (!data) return;
-  $('vocabPosList').innerHTML = data.positive.map(t => `<span class="token-pill token-pos">+${t.weight} ${escapeHtml(t.word)}</span>`).join('');
+  $('vocabPosList').innerHTML = data.positive.map(t => `<button type="button" onclick="testClueWord('${encodeURIComponent(t.word)}','${emo}')" class="token-pill token-pos hover:ring-2 hover:ring-emerald-400 cursor-pointer">+${t.weight} ${escapeHtml(t.word)}</button>`).join('');
   $('vocabNegList').innerHTML = data.negative.map(t => `<span class="token-pill token-neg">${t.weight} ${escapeHtml(t.word)}</span>`).join('');
 }
 
@@ -564,4 +670,101 @@ function renderSimpleMarkdown(md) {
   const lines = safe.split('\n'); let out = '', inList = false;
   for (const line of lines) { const t = line.trim(); if (t.startsWith('- ') || t.startsWith('* ')) { if (!inList) { out += '<ul>'; inList = true; } out += `<li>${t.slice(2)}</li>`; } else { if (inList) { out += '</ul>'; inList = false; } if (t) out += `<p>${t}</p>`; } }
   if (inList) out += '</ul>'; return out;
+}
+
+/* ---------------- Moveable / Draggable Chatbot Engine ---------------- */
+function initDraggableChatbot(drawerId, handleId, fabId, storageKey) {
+  const drawer = $(drawerId);
+  const handle = $(handleId);
+  const fab = $(fabId);
+  if (!drawer || !handle) return;
+
+  const clampDrawer = (left, top) => {
+    const w = drawer.offsetWidth || 400;
+    const h = drawer.offsetHeight || 520;
+    return {
+      left: Math.max(8, Math.min(window.innerWidth - w - 8, left)),
+      top: Math.max(8, Math.min(window.innerHeight - h - 8, top)),
+    };
+  };
+
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+    if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+      const pos = clampDrawer(saved.left, saved.top);
+      drawer.style.left = `${pos.left}px`;
+      drawer.style.top = `${pos.top}px`;
+      drawer.style.right = 'auto';
+      drawer.style.bottom = 'auto';
+    }
+  } catch { /* ignore */ }
+
+  let dragState = null;
+  handle.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    const rect = drawer.getBoundingClientRect();
+    drawer.classList.add('dragging');
+    dragState = { startX: e.clientX, startY: e.clientY, origLeft: rect.left, origTop: rect.top };
+    handle.setPointerCapture(e.pointerId);
+  });
+  handle.addEventListener('pointermove', e => {
+    if (!dragState) return;
+    const pos = clampDrawer(dragState.origLeft + (e.clientX - dragState.startX), dragState.origTop + (e.clientY - dragState.startY));
+    drawer.style.left = `${pos.left}px`;
+    drawer.style.top = `${pos.top}px`;
+    drawer.style.right = 'auto';
+    drawer.style.bottom = 'auto';
+  });
+  const endDrawerDrag = () => {
+    if (!dragState) return;
+    dragState = null;
+    drawer.classList.remove('dragging');
+    const r = drawer.getBoundingClientRect();
+    sessionStorage.setItem(storageKey, JSON.stringify({ left: Math.round(r.left), top: Math.round(r.top) }));
+  };
+  handle.addEventListener('pointerup', endDrawerDrag);
+  handle.addEventListener('pointercancel', endDrawerDrag);
+  handle.addEventListener('dblclick', e => {
+    if (e.target.closest('button')) return;
+    drawer.style.left = ''; drawer.style.top = ''; drawer.style.right = ''; drawer.style.bottom = '';
+    sessionStorage.removeItem(storageKey);
+  });
+
+  if (fab) {
+    let fabDrag = null;
+    fab.addEventListener('pointerdown', e => {
+      const r = fab.getBoundingClientRect();
+      fabDrag = { startX: e.clientX, startY: e.clientY, origLeft: r.left, origTop: r.top, moved: false };
+      fab.setPointerCapture(e.pointerId);
+    });
+    fab.addEventListener('pointermove', e => {
+      if (!fabDrag) return;
+      const dx = e.clientX - fabDrag.startX;
+      const dy = e.clientY - fabDrag.startY;
+      if (Math.hypot(dx, dy) > 6) {
+        fabDrag.moved = true;
+        fab.classList.add('dragging');
+        const left = Math.max(8, Math.min(window.innerWidth - fab.offsetWidth - 8, fabDrag.origLeft + dx));
+        const top = Math.max(8, Math.min(window.innerHeight - fab.offsetHeight - 8, fabDrag.origTop + dy));
+        fab.style.left = `${left}px`; fab.style.top = `${top}px`; fab.style.right = 'auto'; fab.style.bottom = 'auto';
+      }
+    });
+    const endFab = () => {
+      if (!fabDrag) return;
+      const wasMoved = fabDrag.moved;
+      fabDrag = null;
+      fab.classList.remove('dragging');
+      if (!wasMoved) toggleAgentDrawer();
+    };
+    fab.addEventListener('pointerup', endFab);
+    fab.addEventListener('pointercancel', endFab);
+    fab.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAgentDrawer(); } });
+  }
+
+  window.addEventListener('resize', () => {
+    if (!drawer.style.left) return;
+    const pos = clampDrawer(parseFloat(drawer.style.left), parseFloat(drawer.style.top));
+    drawer.style.left = `${pos.left}px`;
+    drawer.style.top = `${pos.top}px`;
+  });
 }
