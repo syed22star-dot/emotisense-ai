@@ -110,11 +110,15 @@ class EmotionAgentService:
                     ui_commands.append({"type": "run_movie_vibe", "title": title, "result": mv})
                     tool_outputs["movie_vibe"] = {
                         "query": mv["query"],
+                        "matched_title": mv["matched_title"],
                         "verdict_title": mv["verdict_title"],
                         "sample_count": mv["sample_count"],
                         "dominant_emotion": mv["dominant_emotion"],
                         "vibe_indices": mv["vibe_indices"],
-                        "emotion_mix": mv["emotion_mix"],
+                        "watch_verdict_pie": mv.get("watch_verdict_pie"),
+                        "audience_suitability": mv.get("audience_suitability"),
+                        "critic_scores": mv.get("critic_scores"),
+                        "bot_filter": mv.get("bot_filter"),
                     }
 
             elif name == "analyze_topic_pulse" and self.pulse is not None:
@@ -146,27 +150,64 @@ class EmotionAgentService:
 
         return ui_commands, tool_outputs
 
+    def _extract_watch_intent_title(self, message: str) -> str:
+        """Extract clean movie/show title even from casual messages or typos like 'wtach pushpa shdl i wtach or not'."""
+        q = message.strip()
+        ql = q.lower()
+        watch_triggers = (
+            "watch", "wtach", "wacth", "movie", "film", "flim", "series", "show ",
+            "worth watching", "should i see", "vibe of", "reviews for", "review of", "family friendly", "adult rated",
+        )
+        if not any(t in ql for t in watch_triggers):
+            return ""
+        m = re.search(
+            r"(?:to\s+(?:watch|wtach|wacth|see)|(?:watch|wtach|wacth|movie|film|series|show|vibe of|reviews for|review of))\s+[\"']?([a-zA-Z0-9\s:'.-]{2,45})",
+            q,
+            re.IGNORECASE,
+        )
+        if not m:
+            return ""
+        cand = m.group(1)
+        cand = re.split(
+            r"\b(?:so|let me|let em|should|shdl|shld|or not|movie|film|please|bro|is it|worth|family|adult|rating)\b",
+            cand,
+            flags=re.IGNORECASE,
+        )[0].strip(" ,.?!\"'-")
+        noise = {"this", "that", "it", "a movie", "the movie", "any movie", "something", "me", "my", "vibe", "scanner"}
+        return cand if (len(cand) >= 2 and cand.lower() not in noise) else ""
+
     def emotion_autopilot_fallback(self, message: str, current_text: str, active_model: str):
         q = message.lower().strip()
 
-        m_mov = re.search(r"(?:movie|film|show|series|vibe of|reviews for|scan)\s+[\"']?([a-zA-Z0-9\s:'.-]{2,40})[\"']?", q)
-        if self.pulse is not None and any(k in q for k in ["movie", "film", "vibe of", "reviews for", "show ", "series "]):
-            raw_t = ""
-            if m_mov:
-                raw_t = m_mov.group(1).strip(" .?!\"'")
-            if raw_t and raw_t not in ("vibe", "scanner", "reviews"):
-                try:
-                    ui_cmds, outs = self.execute_tools([{"tool": "analyze_movie_vibe", "args": {"title": raw_t}}], current_text, active_model)
-                    mv = outs.get("movie_vibe", {})
-                    return (
-                        f"I scanned `{mv.get('sample_count')}` live reviews & headlines for **{mv.get('query')}**:\n"
-                        f"- **Audience Vibe:** **{mv.get('verdict_title')}** ({mv.get('dominant_emotion', '').title()} leads)\n"
-                        f"- **Hype & Joy:** `{mv.get('vibe_indices', {}).get('hype_joy')}%` | **Suspense:** `{mv.get('vibe_indices', {}).get('suspense')}%` | **Tearjerker:** `{mv.get('vibe_indices', {}).get('tearjerker')}%`",
-                        ui_cmds,
-                        ["Try movie: Interstellar", "Check tone of my draft email", "Open NLP Research & A/B Lab"],
-                    )
-                except Exception:
-                    pass
+        movie_title = self._extract_watch_intent_title(message)
+        if self.pulse is not None and movie_title:
+            try:
+                ui_cmds, outs = self.execute_tools([{"tool": "analyze_movie_vibe", "args": {"title": movie_title}}], current_text, active_model)
+                mv = outs.get("movie_vibe", {})
+                pie = mv.get("watch_verdict_pie") or {}
+                aud = mv.get("audience_suitability") or {}
+                cs = mv.get("critic_scores") or {}
+                score_bits = []
+                if cs.get("rotten_tomatoes") is not None:
+                    score_bits.append(f"Rotten Tomatoes `{cs['rotten_tomatoes']}%`")
+                if cs.get("metacritic") is not None:
+                    score_bits.append(f"Metacritic `{cs['metacritic']}/100`")
+                score_str = f"\n- **Critic Scores:** {', '.join(score_bits)}" if score_bits else ""
+                reply_txt = (
+                    f"### 🎬 {mv.get('matched_title') or mv.get('query')} — **{pie.get('headline', mv.get('verdict_title'))}**\n"
+                    f"- **Audience Type:** {aud.get('emoji', '')} **{aud.get('short_badge', 'Checked')}** — {aud.get('reason', '')}"
+                    f"{score_str}\n"
+                    f"- **Bot Filter:** {(mv.get('bot_filter') or {}).get('summary', '')}\n"
+                    f"- **Watch Verdict Breakdown:** Shown in the live pie chart below & on screen!"
+                )
+                return (
+                    reply_txt,
+                    ui_cmds,
+                    ["Try movie: 3 Idiots", "Try movie: Oppenheimer", "Check tone of my draft email"],
+                    pie,
+                )
+            except Exception:
+                pass
 
         if any(k in q for k in ["a/b", "ab test", "mcnemar", "bootstrap", "stress test", "negation flip", "ablation"]):
             ui_cmds, outs = self.execute_tools([{"tool": "run_ab_comparison", "args": {"text": current_text}}], current_text, active_model)
@@ -177,6 +218,7 @@ class EmotionAgentService:
                 f"- **Variant B (Hybrid Ensemble):** `{ab.get('variant', {}).get('emotion')}` (`{ab.get('variant', {}).get('confidence')}%`) | McNemar `p = {ab.get('cohort_mcnemar_p')}`",
                 ui_cmds,
                 ["Run 10-entry batch journal", "Inspect fear vocabulary", "Back to Emotion Studio"],
+                None,
             )
 
         if any(k in q for k in ["batch", "10 entry", "10-entry", "journal demo"]):
@@ -188,6 +230,7 @@ class EmotionAgentService:
                 f"- **Control vs Champion Agreement:** `{s.get('agreement_rate')}%`",
                 ui_cmds,
                 ["Open NLP Research & A/B Lab", "Back to Emotion Studio"],
+                None,
             )
 
         for emo in EMOTION_META:
@@ -198,6 +241,7 @@ class EmotionAgentService:
                     f"I opened **NLP Research & A/B Lab** for **{emo.title()}** (`Hybrid Word+Char+Syntax + LR`):\n- Top signals: {pos_words}",
                     ui_cmds,
                     ["Run Control vs Hybrid Ensemble A/B test", "Run 10-entry batch journal"],
+                    None,
                 )
 
         m_quoted = re.search(r'"([^"]{6,})"', message)
@@ -219,16 +263,18 @@ class EmotionAgentService:
                 f"- **Key Triggers:** {trigs}\n- **Consensus:** `{an.get('arena_consensus')}`",
                 ui_cmds,
                 ["Run Control vs Hybrid Ensemble A/B test", "Run 10-entry batch journal"],
+                None,
             )
 
         return (
-            "Hi! Share any journal line or message, and I'll analyze it across all 7 models on screen — or ask me to run the Control vs Hybrid Ensemble A/B Lab or 10-entry Batch Journal!",
+            "Hi! Ask me about **any movie/show** (like *\"Should I watch Pushpa?\"*) for a Watch Verdict Pie Chart + Family vs Adult rating, or share any message to analyze & soften!",
             [],
             [
-                "Analyze: \"I did not feel angry at all, actually I felt relieved and grateful!\"",
+                "Should I watch Pushpa?",
+                "Scan movie: 3 Idiots",
                 "Run Control vs Hybrid Ensemble A/B test",
-                "Run 10-entry batch journal",
             ],
+            None,
         )
 
     def handle_chat(self, data: dict, request_headers) -> dict:
@@ -242,7 +288,7 @@ class EmotionAgentService:
         provider, api_key = resolve_llm_credentials(data, request_headers)
 
         if not api_key:
-            reply_text, ui_commands, quick_replies = self.emotion_autopilot_fallback(message, current_text, active_model)
+            reply_text, ui_commands, quick_replies, pie_chart = self.emotion_autopilot_fallback(message, current_text, active_model)
             return {
                 "reply": reply_text,
                 "mode": "autopilot-fallback",
@@ -250,7 +296,47 @@ class EmotionAgentService:
                 "model": "NLP Autopilot",
                 "ui_commands": ui_commands,
                 "quick_replies": quick_replies,
+                "pie_chart": pie_chart,
             }
+
+        # Fast-path unambiguous watch/movie queries directly to real Movie Vibe tool without 2x LLM latency
+        direct_movie = self._extract_watch_intent_title(message)
+        if self.pulse is not None and direct_movie:
+            ui_commands, tool_outputs = self.execute_tools([{"tool": "analyze_movie_vibe", "args": {"title": direct_movie}}], current_text, active_model)
+            mv = tool_outputs.get("movie_vibe", {})
+            pie = mv.get("watch_verdict_pie") or {}
+            aud = mv.get("audience_suitability") or {}
+            synth_watch_sys = (
+                "You are Tone Helper inside VibeCheck. Real live movie reviews were just scanned and scored with our NLP model.\n"
+                "Answer the user warmly & concisely using ONLY these real metrics: give the clear Watch Verdict (Definitely Watch / Good to Watch / One-Time Watchable / Not That Good), "
+                "state the separate Family Entertainer vs Teen/Adult suitability clearly, cite Rotten Tomatoes/Metacritic if present, mention the Bot Filter count, and tell them the Watch Verdict Pie Chart is shown below.\n"
+                "Respond ONLY with valid JSON: {\"reply\": \"...\", \"follow_up_chips\": [\"...\"]}"
+            )
+            try:
+                raw_w, used_w, tel_w = call_llm_raw(provider, api_key, synth_watch_sys, f"User: {message}\nReal Scan Data:\n{json.dumps(mv, indent=2)}")
+                w_obj = parse_json_envelope(raw_w)
+                return {
+                    "reply": w_obj.get("reply") or raw_w,
+                    "mode": "llm-autonomous",
+                    "provider": provider,
+                    "model": used_w,
+                    "telemetry": tel_w,
+                    "ui_commands": ui_commands,
+                    "quick_replies": w_obj.get("follow_up_chips") or ["Try movie: 3 Idiots", "Try movie: Inception", "Scan another movie"],
+                    "pie_chart": pie,
+                    "tool_outputs": tool_outputs,
+                }
+            except Exception:
+                reply_text, ui_cmds_fb, quick_replies, pie_fb = self.emotion_autopilot_fallback(message, current_text, active_model)
+                return {
+                    "reply": reply_text,
+                    "mode": "autopilot-fallback",
+                    "provider": provider,
+                    "model": "Watch Verdict Engine",
+                    "ui_commands": ui_cmds_fb,
+                    "quick_replies": quick_replies,
+                    "pie_chart": pie_fb,
+                }
 
         history_txt = "\n".join(f"{'User' if m.get('role') == 'user' else 'Assistant'}: {m.get('content', '')}" for m in history[-8:])
         planner_system = (
@@ -274,7 +360,7 @@ class EmotionAgentService:
             raw_plan, model_used, telemetry = call_llm_raw(provider, api_key, planner_system, planner_input)
             plan = parse_json_envelope(raw_plan)
         except Exception as exc:
-            reply_text, ui_commands, quick_replies = self.emotion_autopilot_fallback(message, current_text, active_model)
+            reply_text, ui_commands, quick_replies, pie_chart = self.emotion_autopilot_fallback(message, current_text, active_model)
             return {
                 "reply": f"{reply_text}\n\n_(LLM notice `{exc}` — completed locally.)_",
                 "mode": "autopilot-fallback",
@@ -282,6 +368,7 @@ class EmotionAgentService:
                 "model": "Local Fallback",
                 "ui_commands": ui_commands,
                 "quick_replies": quick_replies,
+                "pie_chart": pie_chart,
             }
 
         tool_calls = plan.get("tool_calls") or []
@@ -330,5 +417,6 @@ class EmotionAgentService:
             "telemetry": telemetry,
             "ui_commands": ui_commands,
             "quick_replies": chips,
+            "pie_chart": (tool_outputs.get("movie_vibe") or {}).get("watch_verdict_pie"),
             "tool_outputs": tool_outputs,
         }

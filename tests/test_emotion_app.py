@@ -82,7 +82,9 @@ def test_tone_guard_and_mocked_live_pulse(monkeypatch):
         "fetch_wikipedia_reception",
         lambda title, max_quotes=16: {
             "matched_title": f"{title} (film)",
-            "summary": "Critics celebrated the heartwarming humor and emotional depth of the film.",
+            "summary": "Critics celebrated the heartwarming humor and emotional depth of the family entertainer film.",
+            "raw_reception_text": "On review aggregator Rotten Tomatoes, the film holds an approval rating of 92% and scored 78 out of 100 on Metacritic.",
+            "categories_text": "Indian comedy-drama films Family films",
             "quotes": [
                 "Audiences praised the joyful friendship, tender heart, and exhilarating uplifting climax.",
                 "Viewers called it delightfully funny, deeply moving, and unforgettable entertainment.",
@@ -95,6 +97,8 @@ def test_tone_guard_and_mocked_live_pulse(monkeypatch):
         lambda query, limit=16: [
             {"text": "Fans still celebrate why this beloved classic brings pure joy and laughter", "source": "News · Variety", "url": "https://example.com/1", "date": "2026-11-20"},
             {"text": "Critics call the gripping twists thrilling and surprisingly heartfelt", "source": "News · THR", "url": "https://example.com/2", "date": "2026-11-21"},
+            {"text": "BUY TICKETS NOW FREE DOWNLOAD HD 1000CR BLOCKBUSTER ALERT", "source": "SpamBot", "url": "", "date": ""},
+            {"text": "Nice bro", "source": "Bot", "url": "", "date": ""},
         ],
     )
     monkeypatch.setattr(live_pulse_service, "fetch_tvmaze_info", lambda title: {})
@@ -104,8 +108,24 @@ def test_tone_guard_and_mocked_live_pulse(monkeypatch):
     assert rmov.status_code == 200
     mv = rmov.get_json()
     assert mv["sample_count"] == 4
-    assert "hype_joy" in mv["vibe_indices"]
+    assert mv["bot_filter"]["filtered_count"] == 2
+    assert mv["critic_scores"]["rotten_tomatoes"] == 92
+    assert mv["critic_scores"]["metacritic"] == 78
+    assert mv["audience_suitability"]["tier"] == "family"
+    assert len(mv["watch_verdict_pie"]["slices"]) == 4
+    assert sum(s["pct"] for s in mv["watch_verdict_pie"]["slices"]) == 100
     assert len(mv["items"]) == 4
+
+    # Verify casual typo watch query routes to movie scanner + returns pie chart
+    rchat = client.post("/api/agent/chat", json={"message": "hey i am thinking to wtach TestClassicMovie so shdl i wtach or not", "api_key": ""})
+    assert rchat.status_code == 200
+    ch = rchat.get_json()
+    assert ch["pie_chart"]["winning_label"]
+    assert len(ch["pie_chart"]["slices"]) == 4
+
+    # Verify adult-rated classifier triggers cleanly on mature metadata
+    adult_res = live_pulse_service.classify_audience_rating("Dark Thriller", "Rated R for graphic violence, nudity and strong profanity.", "American thriller films", {})
+    assert adult_res["tier"] == "adult"
 
     rtop = client.post("/api/pulse/topic", json={"topic": "TestTechTopic"})
     assert rtop.status_code == 200

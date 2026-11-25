@@ -599,11 +599,11 @@ function downloadBatchCsv() { if (!batchCsvExport) return; const a = document.cr
 function toggleAgentDrawer() { $('agent-drawer').classList.toggle('closed'); }
 function askCoachTopic(prompt) { $('agent-drawer').classList.remove('closed'); $('agent-input').value = prompt; submitAgentChat(new Event('submit')); }
 
-function appendCoachMessage(markdownText, actions = [], quickReplies = [], meta = '') {
+function appendCoachMessage(markdownText, actions = [], quickReplies = [], meta = '', pieChart = null) {
   const box = $('agent-messages');
   const wrap = document.createElement('div');
   wrap.className = 'mr-4 p-3 rounded-2xl bg-white border border-purple-100 text-slate-800 shadow-sm space-y-2 agent-msg-prose';
-  wrap.innerHTML = renderSimpleMarkdown(markdownText);
+  wrap.innerHTML = renderSimpleMarkdown(markdownText) + (pieChart ? buildInlineSvgPie(pieChart) : '');
 
   if (quickReplies?.length) {
     const qrRow = document.createElement('div');
@@ -664,7 +664,7 @@ async function submitAgentChat(e) {
 
     agentHistory.push({ role: 'user', content: msg });
     agentHistory.push({ role: 'assistant', content: data.reply || data.error });
-    appendCoachMessage(data.reply || data.error, data.actions || [], data.quick_replies || [], data.model || '');
+    appendCoachMessage(data.reply || data.error, data.actions || [], data.quick_replies || [], data.model || '', data.pie_chart || null);
   } catch (err) {
     thinking.remove();
     appendCoachMessage(`Network issue: ${escapeHtml(err.message)}`);
@@ -688,6 +688,23 @@ function renderSimpleMarkdown(md) {
 
 /* ---------------- Real-World Movie Vibe, Topic Mood & Tone Guard ---------------- */
 let lastMovieCard = null;
+let movieWatchChart = null;
+
+function buildInlineSvgPie(pieData) {
+  if (!pieData || !Array.isArray(pieData.slices) || !pieData.slices.length) return '';
+  let acc = 0;
+  const r = 15.91549430918954;
+  const circles = pieData.slices.map(s => {
+    const dash = `${s.pct} ${100 - s.pct}`;
+    const offset = 25 - acc;
+    acc += s.pct;
+    return `<circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${s.color}" stroke-width="6.5" stroke-dasharray="${dash}" stroke-dashoffset="${offset}"></circle>`;
+  }).join('');
+  const legend = pieData.slices.map(s =>
+    `<div class="flex items-center justify-between gap-2 text-[10px]"><span class="flex items-center gap-1.5 font-semibold text-slate-700"><span class="w-2 h-2 rounded-full inline-block" style="background:${s.color}"></span>${escapeHtml(s.label)}</span><span class="font-mono font-bold text-slate-900">${s.pct}%</span></div>`
+  ).join('');
+  return `<div class="mt-2 p-2.5 rounded-xl bg-purple-50/70 border border-purple-200 space-y-2"><div class="flex items-center justify-between text-[10px] font-extrabold text-violet-900"><span>📊 Verdict Pie Chart</span><span>${escapeHtml(pieData.winning_label || '')}</span></div><div class="flex items-center gap-3"><svg viewBox="0 0 42 42" class="w-16 h-16 shrink-0"><circle cx="21" cy="21" r="${r}" fill="#fff"></circle>${circles}</svg><div class="flex-1 space-y-0.5">${legend}</div></div></div>`;
+}
 const DRAFT_EXAMPLES = {
   harsh: "Why did nobody check this before shipping? This delay is ridiculous and I am furious waiting around ASAP.",
   anxious: "I am terrified we missed the deadline and the whole team is stressed that this client presentation will collapse.",
@@ -749,6 +766,50 @@ function renderMovieVibeResults(data) {
   $('movieVerdictSub').textContent = data.verdict_subtitle;
   $('movieDominantEmoji').textContent = data.dominant_emoji || '🎬';
   $('movieSampleNote').textContent = `Scored ${data.sample_count} real quotes (Wiki ${meta.wiki_quotes || 0} + News ${meta.news_quotes || 0})`;
+
+  const aud = data.audience_suitability || {};
+  const audCard = $('movieAudienceRatingCard');
+  const audBadge = $('movieAudienceBadge');
+  if (audCard && audBadge && aud.label) {
+    const clsMap = {
+      family: { card: 'p-3 rounded-xl border border-emerald-200 bg-emerald-50/70 text-left space-y-1', badge: 'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 border border-emerald-300 text-emerald-900' },
+      teen: { card: 'p-3 rounded-xl border border-amber-200 bg-amber-50/70 text-left space-y-1', badge: 'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 border border-amber-300 text-amber-900' },
+      adult: { card: 'p-3 rounded-xl border border-rose-300 bg-rose-50/80 text-left space-y-1', badge: 'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 border border-rose-300 text-rose-900' },
+    };
+    const st = clsMap[aud.tier] || clsMap.teen;
+    audCard.className = st.card;
+    audBadge.className = st.badge;
+    audBadge.textContent = `${aud.emoji || ''} ${aud.short_badge || aud.label}`;
+    $('movieAudienceReason').textContent = aud.reason || '';
+  }
+
+  const pie = data.watch_verdict_pie || {};
+  if (Array.isArray(pie.slices) && pie.slices.length && $('movieWatchPieChart')) {
+    $('movieWatchWinningBadge').textContent = pie.winning_label || '';
+    $('movieWatchReason').textContent = pie.reason || '';
+    $('movieWatchLegend').innerHTML = pie.slices.map(s =>
+      `<div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 font-semibold text-slate-700 truncate"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></span>${escapeHtml(s.label)}</span><span class="font-mono font-bold text-slate-900">${s.pct}%</span></div>`
+    ).join('');
+    if (movieWatchChart) movieWatchChart.destroy();
+    movieWatchChart = new Chart($('movieWatchPieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: pie.slices.map(s => s.label),
+        datasets: [{ data: pie.slices.map(s => s.pct), backgroundColor: pie.slices.map(s => s.color), borderWidth: 1, borderColor: '#ffffff' }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '56%', plugins: { legend: { display: false } } },
+    });
+  }
+
+  const cs = data.critic_scores || {};
+  const bf = data.bot_filter || {};
+  const pills = [];
+  if (cs.rotten_tomatoes !== null && cs.rotten_tomatoes !== undefined) pills.push(`<span class="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 font-bold text-rose-800">🍅 Rotten Tomatoes ${cs.rotten_tomatoes}%</span>`);
+  if (cs.metacritic !== null && cs.metacritic !== undefined) pills.push(`<span class="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 font-bold text-amber-900">🅼 Metacritic ${cs.metacritic}/100</span>`);
+  if (cs.tvmaze_rating) pills.push(`<span class="px-2 py-0.5 rounded-full bg-sky-50 border border-sky-200 font-bold text-sky-900">📺 TVMaze ★ ${cs.tvmaze_rating}/10</span>`);
+  if (!pills.length) pills.push('<span class="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700">📰 Verified Critic &amp; News Sources</span>');
+  if ($('movieCriticScoresRow')) $('movieCriticScoresRow').innerHTML = pills.join('');
+  if ($('movieBotFilterNote')) $('movieBotFilterNote').textContent = bf.summary ? `🛡️ Anti-Bot Purity ${bf.cleanliness_pct}% · ${bf.summary}` : '';
 
   const vi = data.vibe_indices || {};
   const meterRows = [
