@@ -78,7 +78,7 @@ function resetAgentGreeting() {
   const hasKey = Boolean(sessionStorage.getItem('emotisense_agent_apikey')) || $('agent-key-badge').textContent.includes('LLM');
   const keyHint = hasKey ? '' : '\n\n💡 _Tip: Click the **🔑 Key** icon above to plug in your `GEMINI_API_KEY` for full open-ended NLP LLM coaching & custom rewrites._';
   appendCoachMessage(
-    'Hi! 👋 I’m **EmotiCoach AI**, your autonomous NLP site agent.\n\nShare any message, feeling, or journal lines with me — I can **automatically enter it into Emotion Studio, highlight the trigger words, compare all 4 models, or run Batch Journal screening live on screen!**' + keyHint,
+    'Hi! 👋 I’m **Tone Helper**, your autonomous NLP site agent.\n\nShare any message, feeling, or journal lines with me — I can **automatically enter it into Emotion Studio, highlight the trigger words, compare all 4 models, or run Batch Journal screening live on screen!**' + keyHint,
     [],
     [
       "Analyze: 'I did not feel angry at all, I felt relieved and grateful!'",
@@ -322,7 +322,7 @@ function selectEmotionStoryStep(step) {
   });
   const det = $('emotion-story-detail');
   if (det) {
-    det.innerHTML = `<div>${EMOTION_STORY_TEXT[step] || ''}</div><button type="button" onclick="askCoachTopic('Explain simply how EmotiSense understands negations like not angry and why Hybrid Ensemble beats simple Bag of Words')" class="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-violet-800 font-bold hover:bg-purple-50">Ask NLP Tutor</button>`;
+    det.innerHTML = `<div>${EMOTION_STORY_TEXT[step] || ''}</div><button type="button" onclick="askCoachTopic('Explain simply how VibeCheck understands negations like not angry and why Hybrid Ensemble beats simple Bag of Words')" class="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-violet-800 font-bold hover:bg-purple-50">Ask NLP Tutor</button>`;
   }
 }
 
@@ -593,7 +593,7 @@ function renderBatchResults(data) {
   if (batchChart) batchChart.destroy();
   batchChart = new Chart($('batchChart'), { type: 'bar', data: { labels: Object.keys(dist).map(capitalise), datasets: [{ label: 'Entries', data: Object.values(dist), backgroundColor: Object.keys(dist).map(k => EMOTION_META[k].color), borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
 }
-function downloadBatchCsv() { if (!batchCsvExport) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([batchCsvExport], { type: 'text/csv' })); a.download = 'emotisense_batch_results.csv'; a.click(); }
+function downloadBatchCsv() { if (!batchCsvExport) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([batchCsvExport], { type: 'text/csv' })); a.download = 'vibecheck_batch_results.csv'; a.click(); }
 
 /* ---------------- Autonomous Agent Drawer ---------------- */
 function toggleAgentDrawer() { $('agent-drawer').classList.toggle('closed'); }
@@ -773,7 +773,7 @@ function renderMovieVibeResults(data) {
 async function copyMovieVibeCard() {
   if (!lastMovieCard) return;
   const vi = lastMovieCard.vibe_indices || {};
-  const txt = `${lastMovieCard.matched_title || lastMovieCard.query} — ${lastMovieCard.verdict_title}\nAnalyzed ${lastMovieCard.sample_count} real critic & news quotes with EmotiSense AI:\nFeel-Good: ${vi.hype_joy}% | Suspense: ${vi.suspense}% | Tearjerker: ${vi.tearjerker}% | Debate: ${vi.heat_rant}%`;
+  const txt = `${lastMovieCard.matched_title || lastMovieCard.query} — ${lastMovieCard.verdict_title}\nAnalyzed ${lastMovieCard.sample_count} real critic & news quotes with VibeCheck:\nFeel-Good: ${vi.hype_joy}% | Suspense: ${vi.suspense}% | Tearjerker: ${vi.tearjerker}% | Debate: ${vi.heat_rant}%`;
   try { await navigator.clipboard.writeText(txt); $('movieSampleNote').textContent = 'Copied vibe card to clipboard!'; } catch { /* ignore */ }
 }
 

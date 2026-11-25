@@ -1,4 +1,4 @@
-"""Tests for EmotiSense AI v3.0 NLP feature extraction, A/B analytics, API routes, and agent."""
+"""Tests for VibeCheck v3.0 NLP feature extraction, A/B analytics, API routes, and agent."""
 
 import os
 import sys

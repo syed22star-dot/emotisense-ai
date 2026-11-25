@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="author" content="Syed Tahir Ahamed R" />
-  <meta name="description" content="EmotiSense AI — Bright Everyday Emotion Detection, 4-Model NLP Consensus Arena, Vocabulary Explorer & Proactive EmotiCoach AI." />
-  <title>EmotiSense AI | Emotion Studio &amp; NLP Research Lab</title>
+  <meta name="description" content="VibeCheck — Free Movie Review Vibe Scanner, Live Topic Mood & Before-You-Send Message Tone Checker." />
+  <meta name="keywords" content="movie vibe checker, movie review sentiment, message tone checker, soften angry email, live topic mood, vibe check" />
+  <meta property="og:title" content="VibeCheck — Movie Review Vibe &amp; Message Tone Checker" />
+  <meta property="og:description" content="Scan real critic &amp; audience reviews for any movie or show, check live topic mood, and soften harsh emails before hitting send." />
+  <title>VibeCheck — Movie Review Vibe, Topic Mood &amp; Message Tone Checker</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,12 +38,12 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <i data-lucide="key-round" class="w-4 h-4 text-violet-700"></i>
-          <h3 class="font-bold text-slate-900 text-base">EmotiCoach AI · Optional LLM Key</h3>
+          <h3 class="font-bold text-slate-900 text-base">Tone Helper · Optional LLM Key</h3>
         </div>
         <button onclick="closeAgentSettings()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
       <p class="text-xs text-slate-600 leading-relaxed">
-        EmotiCoach works immediately with built-in guided NLP triage. To unlock open-ended <strong>Gemini 4 Hydrogen</strong> or <strong>OpenAI</strong> conversations &amp; custom tone rewrites, set <code class="font-mono text-violet-700">GEMINI_API_KEY</code> in Render env vars or paste a session key below:
+        Tone Helper works immediately with built-in guided NLP triage. To unlock open-ended <strong>Gemini 4 Hydrogen</strong> or <strong>OpenAI</strong> conversations &amp; custom tone rewrites, set <code class="font-mono text-violet-700">GEMINI_API_KEY</code> in Render env vars or paste a session key below:
       </p>
       <div class="space-y-3">
         <div>
@@ -75,7 +78,7 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">EmotiSense AI</h1>
+              <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">VibeCheck</h1>
               <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-violet-50 text-violet-800 border border-violet-200">Lavender v3.0</span>
             </div>
             <div id="header-health-pill" class="text-[11px] text-slate-500 flex items-center gap-1.5">
@@ -104,7 +107,7 @@
 
         <button onclick="toggleAgentDrawer()" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-sm transition">
           <i data-lucide="bot" class="w-3.5 h-3.5"></i>
-          EmotiCoach AI
+          Tone Helper
           <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
         </button>
       </div>
@@ -232,7 +235,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 class="text-lg font-extrabold text-slate-900">Understand the Feeling Behind Any Text</h2>
-              <p class="text-xs text-slate-500">Type naturally — or tap a mood preset below. Pause &gt;3 seconds and EmotiCoach can help write or explore!</p>
+              <p class="text-xs text-slate-500">Type naturally — or tap a mood preset below. Pause &gt;3 seconds and Tone Helper can help write or explore!</p>
             </div>
             <select id="modelSelect" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-violet-800 outline-none focus:border-violet-600">
               <option value="hybrid_ensemble" selected>Hybrid Soft Ensemble (Word+Char+Syntax)</option>
@@ -414,7 +417,7 @@
               <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded-full bg-violet-100 text-violet-800">How Our NLP Works</span>
               <span class="text-[11px] font-semibold text-emerald-700 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> All 7 NLP Pipelines Live</span>
             </div>
-            <h2 class="text-lg font-extrabold text-slate-900 mt-1">How EmotiSense Reads Tone &amp; Emotion Step-by-Step</h2>
+            <h2 class="text-lg font-extrabold text-slate-900 mt-1">How VibeCheck Reads Tone &amp; Emotion Step-by-Step</h2>
             <p class="text-xs text-slate-500">Click any step below or try a tricky test sentence to watch how words, negations, and subwords work together.</p>
           </div>
           <div class="flex flex-wrap gap-1.5">
@@ -451,7 +454,7 @@
           <div>
             <strong class="text-violet-900">Why Step 1 Matters:</strong> Many tutorials delete stopwords (&ldquo;not&rdquo;, &ldquo;never&rdquo;, &ldquo;but&rdquo;), turning &ldquo;I am <strong>not</strong> happy&rdquo; into &ldquo;happy&rdquo;! Keeping helper words &amp; expanding apostrophes like <code>didn&rsquo;t</code> &rarr; <code>did not</code> preserves the true meaning.
           </div>
-          <button type="button" onclick="askCoachTopic('Explain simply how EmotiSense understands negations like not angry and why Hybrid Ensemble beats simple Bag of Words')" class="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-violet-800 font-bold hover:bg-purple-50">Ask NLP Tutor</button>
+          <button type="button" onclick="askCoachTopic('Explain simply how VibeCheck understands negations like not angry and why Hybrid Ensemble beats simple Bag of Words')" class="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-violet-800 font-bold hover:bg-purple-50">Ask NLP Tutor</button>
         </div>
 
         <div id="emotion-live-xray" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
@@ -540,7 +543,7 @@
           <h3 class="text-sm font-extrabold text-slate-900">2. Confidence Honesty Check (10-Bin Calibration Curve)</h3>
           <div class="h-60"><canvas id="calibrationChart"></canvas></div>
           <p class="text-[11px] text-slate-600 bg-purple-50/40 p-2.5 rounded-lg border border-purple-100">
-            <strong>Logic:</strong> Staying close to the dashed diagonal means when EmotiSense predicts <em>&ldquo;80% confident&rdquo;</em>, it is right ~80% of the time &mdash; not overconfident!
+            <strong>Logic:</strong> Staying close to the dashed diagonal means when VibeCheck predicts <em>&ldquo;80% confident&rdquo;</em>, it is right ~80% of the time &mdash; not overconfident!
           </p>
         </div>
       </div>
@@ -677,25 +680,25 @@
     </section>
 
     <footer class="pt-6 pb-8 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <div>EmotiSense AI v3.0 · Sunlit Lavender Edition · Syed Tahir Ahamed R</div>
+      <div>VibeCheck v3.0 · Sunlit Lavender Edition · Syed Tahir Ahamed R</div>
       <div class="font-mono text-[11px]">sklearn 1.8.0 · Hybrid Word+Char+AffectiveSyntax Ensemble &amp; Statistical A/B Suite</div>
     </footer>
   </main>
 
-  <!-- Floating EmotiCoach Trigger -->
+  <!-- Floating Tone Helper Trigger -->
   <button id="agent-fab-btn" title="Click to open · Drag to move" class="agent-fab fixed bottom-5 right-5 z-40 px-4 py-3 rounded-full bg-gradient-to-r from-violet-700 to-pink-600 hover:from-violet-800 hover:to-pink-700 text-white text-xs font-bold shadow-xl flex items-center gap-2 transition transform hover:scale-105 cursor-grab active:cursor-grabbing" style="touch-action:none;">
     <i data-lucide="grip-vertical" class="w-3.5 h-3.5 opacity-75"></i>
     <i data-lucide="bot" class="w-4 h-4"></i>
-    <span>EmotiCoach AI</span>
+    <span>Tone Helper</span>
   </button>
 
-  <!-- Proactive Pop-Out 1-on-1 EmotiCoach Concierge -->
+  <!-- Proactive Pop-Out 1-on-1 Tone Helper Concierge -->
   <aside id="agent-drawer" class="agent-drawer closed fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[410px] h-[530px] max-h-[78vh] z-50 soft-panel rounded-2xl border border-purple-200 flex flex-col overflow-hidden shadow-2xl">
     <div id="agent-drag-handle" title="Drag header to move chat window · Double-click to reset dock" class="p-3.5 bg-gradient-to-r from-violet-700 to-pink-600 text-white flex items-center justify-between cursor-grab active:cursor-grabbing select-none" style="touch-action:none;">
       <div class="flex items-center gap-2.5">
         <i data-lucide="grip-vertical" class="w-4 h-4 text-purple-200/80 shrink-0"></i>
         <div class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center"><i data-lucide="bot" class="w-4 h-4 text-white"></i></div>
-        <div><h3 class="text-sm font-bold leading-tight">EmotiCoach AI</h3><p class="text-[10px] text-purple-100">Drag to Move · Explains Tone &amp; NLP</p></div>
+        <div><h3 class="text-sm font-bold leading-tight">Tone Helper</h3><p class="text-[10px] text-purple-100">Drag to Move · Explains Tone &amp; NLP</p></div>
       </div>
       <div class="flex items-center gap-1">
         <button onclick="openAgentSettings()" title="LLM Key Settings" class="p-1.5 rounded-lg hover:bg-white/15"><i data-lucide="key-round" class="w-3.5 h-3.5"></i></button>

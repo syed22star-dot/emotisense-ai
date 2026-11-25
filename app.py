@@ -1,7 +1,7 @@
 """
 app.py
 ------
-Clean modular Flask entry point for EmotiSense AI v3.0.
+Clean modular Flask entry point for VibeCheck v3.0.
 Delegates NLP feature extraction, multi-model inference, A/B experimentation,
 and autonomous LLM UI orchestration to `core/`.
 """
@@ -49,7 +49,7 @@ def health():
     env_openai = bool(os.environ.get("OPENAI_API_KEY", "").strip())
     return jsonify({
         "status": "healthy" if nlp_service.is_ready else "degraded",
-        "service": "EmotiSense AI",
+        "service": "VibeCheck",
         "version": "3.0.0",
         "sklearn_version": sklearn.__version__,
         "models_loaded": list(nlp_service.loaded_models.keys()),

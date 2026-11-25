@@ -1,7 +1,7 @@
 """
 core/live_pulse_service.py
 --------------------------
-Real-world, everyday consumer NLP services powered by EmotiSense's 90.46% Hybrid Ensemble:
+Real-world, everyday consumer NLP services powered by VibeCheck's 90.46% Hybrid Ensemble:
   1. Movie & Show Audience Vibe Scanner (Wikipedia Critical Reception + Google News RSS + TVMaze)
   2. Live World & Topic Mood Pulse (Google News RSS + Hacker News stories)
   3. Before-You-Send Message & Email Tone Guard (trigger detection + natural rewrites re-scored live)
@@ -19,7 +19,7 @@ from core.llm_client import call_llm_raw, parse_json_envelope, resolve_llm_crede
 from core.nlp_service import EMOTION_META, EmotionNLPService
 
 
-USER_AGENT = "EmotiSenseAI/4.0 (educational-affective-nlp; https://github.com/syed22star-dot/emotisense-ai)"
+USER_AGENT = "VibeCheckAI/4.0 (educational-affective-nlp; https://github.com/syed22star-dot/emotisense-ai)"
 _PULSE_CACHE = {}
 _CACHE_TTL_SEC = 900.0
 
@@ -55,7 +55,7 @@ def _split_clean_sentences(text: str, max_items: int = 18) -> list[str]:
 
 
 class LivePulseService:
-    """Fetches real public reaction snippets and scores them with EmotiSense's trained Hybrid NLP models."""
+    """Fetches real public reaction snippets and scores them with VibeCheck's trained Hybrid NLP models."""
 
     def __init__(self, nlp_service: EmotionNLPService):
         self.nlp = nlp_service

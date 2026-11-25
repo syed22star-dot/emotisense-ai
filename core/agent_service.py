@@ -2,7 +2,7 @@
 core/agent_service.py
 ---------------------
 Autonomous 2-pass Tool-Calling Affective NLP & Website Automation Agent
-for EmotiSense AI v3.0 (Gemini 4 Hydrogen -> Gemini 3.5 Flash Lite resilient chain + OpenAI).
+for VibeCheck v3.0 (Gemini 4 Hydrogen -> Gemini 3.5 Flash Lite resilient chain + OpenAI).
 """
 
 import json
@@ -254,7 +254,7 @@ class EmotionAgentService:
 
         history_txt = "\n".join(f"{'User' if m.get('role') == 'user' else 'Assistant'}: {m.get('content', '')}" for m in history[-8:])
         planner_system = (
-            "You are EmotiCoach AI, a warm, insightful, autonomous Affective NLP & Website Automation Agent inside EmotiSense AI v3.0.\n"
+            "You are Tone Helper, a warm, insightful, autonomous Affective NLP & Website Automation Agent inside VibeCheck v3.0.\n"
             "Explain emotion nuances gently for everyday users AND discuss statistical NLP A/B findings (McNemar p-values, Brier calibration, subword & negation-window features) for researchers.\n"
             "Drive the website live with `tool_calls` whenever analyzing, rewriting, comparing models, or inspecting tabs.\n"
             "Available tools:\n"
@@ -299,7 +299,7 @@ class EmotionAgentService:
         ui_commands, tool_outputs = self.execute_tools(tool_calls, current_text, active_model)
 
         synth_system = (
-            "You are EmotiCoach AI. The NLP tools just executed on screen with the exact numbers below.\n"
+            "You are Tone Helper. The NLP tools just executed on screen with the exact numbers below.\n"
             "Explain the detected emotion, trigger tokens, affective syntax cues (e.g. negations/pivots), and model consensus warmly using ONLY those computed results.\n"
             "Respond ONLY with valid JSON: {\"reply\": \"...\", \"follow_up_chips\": [\"...\"]}"
         )
