@@ -1,0 +1,15 @@
+name: Keep VibeCheck Warm
+
+on:
+  schedule:
+    # Runs every 10 minutes during 08:30 AM - 07:29 PM IST (11 hrs/day)
+    # Keeping both free Render services warm 11 hrs/day stays inside Render's 750 free hrs/month cap (~660 hrs).
+    - cron: '*/10 3-13 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping VibeCheck /health
+        run: curl -fsS --retry 2 --max-time 60 https://vibecheck-llcw.onrender.com/health
