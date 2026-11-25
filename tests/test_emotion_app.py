@@ -57,3 +57,58 @@ def test_health_emotions_benchmarks_and_ab_routes():
     rbat = client.post("/api/batch", json={"lines": ["I am thrilled!", "I feel lonely tonight."]})
     assert rbat.status_code == 200
     assert rbat.get_json()["summary"]["total_entries"] == 2
+
+
+def test_tone_guard_and_mocked_live_pulse(monkeypatch):
+    client = app.test_client()
+
+    # 1. Before-You-Send Tone Guard with real ML re-scoring
+    rtg = client.post(
+        "/api/tone-guard",
+        json={"text": "Why did nobody check this? This delay is ridiculous and I am furious ASAP.", "goal": "calm"},
+    )
+    assert rtg.status_code == 200
+    tg = rtg.get_json()
+    assert tg["original"]["emotion"] == "anger"
+    assert len(tg["rewrites"]) == 2
+    assert tg["rewrites"][0]["anger_delta"] < 0
+    assert isinstance(tg["rewrites"][0]["confidence"], float)
+
+    # 2. Movie Vibe & Topic Pulse (mock network sources for deterministic offline CI)
+    from app import live_pulse_service
+
+    monkeypatch.setattr(
+        live_pulse_service,
+        "fetch_wikipedia_reception",
+        lambda title, max_quotes=16: {
+            "matched_title": f"{title} (film)",
+            "summary": "Critics celebrated the heartwarming humor and emotional depth of the film.",
+            "quotes": [
+                "Audiences praised the joyful friendship, tender heart, and exhilarating uplifting climax.",
+                "Viewers called it delightfully funny, deeply moving, and unforgettable entertainment.",
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        live_pulse_service,
+        "fetch_google_news_rss",
+        lambda query, limit=16: [
+            {"text": "Fans still celebrate why this beloved classic brings pure joy and laughter", "source": "News · Variety", "url": "https://example.com/1", "date": "2026-11-20"},
+            {"text": "Critics call the gripping twists thrilling and surprisingly heartfelt", "source": "News · THR", "url": "https://example.com/2", "date": "2026-11-21"},
+        ],
+    )
+    monkeypatch.setattr(live_pulse_service, "fetch_tvmaze_info", lambda title: {})
+    monkeypatch.setattr(live_pulse_service, "fetch_hn_stories", lambda topic, limit=10: [])
+
+    rmov = client.post("/api/pulse/movie", json={"title": "TestClassicMovie"})
+    assert rmov.status_code == 200
+    mv = rmov.get_json()
+    assert mv["sample_count"] == 4
+    assert "hype_joy" in mv["vibe_indices"]
+    assert len(mv["items"]) == 4
+
+    rtop = client.post("/api/pulse/topic", json={"topic": "TestTechTopic"})
+    assert rtop.status_code == 200
+    tp = rtop.get_json()
+    assert tp["sample_count"] == 2
+    assert "warmth_temperature" in tp["vibe_indices"]

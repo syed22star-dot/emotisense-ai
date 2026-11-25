@@ -26,8 +26,9 @@ DEMO_JOURNAL_LINES = [
 
 
 class EmotionAgentService:
-    def __init__(self, nlp_service: EmotionNLPService):
+    def __init__(self, nlp_service: EmotionNLPService, live_pulse_service=None):
         self.nlp = nlp_service
+        self.pulse = live_pulse_service
 
     def execute_tools(self, tool_calls: list, current_text: str, active_model: str):
         ui_commands = []
@@ -101,10 +102,71 @@ class EmotionAgentService:
                     "positive_tokens": tokens.get("positive", [])[:6],
                 }
 
+            elif name == "analyze_movie_vibe" and self.pulse is not None:
+                title = str(args.get("title") or "").strip()
+                if title:
+                    mv = self.pulse.analyze_movie_vibe(title, model_key=target_model)
+                    ui_commands.append({"type": "switch_tab", "tab": "studio"})
+                    ui_commands.append({"type": "run_movie_vibe", "title": title, "result": mv})
+                    tool_outputs["movie_vibe"] = {
+                        "query": mv["query"],
+                        "verdict_title": mv["verdict_title"],
+                        "sample_count": mv["sample_count"],
+                        "dominant_emotion": mv["dominant_emotion"],
+                        "vibe_indices": mv["vibe_indices"],
+                        "emotion_mix": mv["emotion_mix"],
+                    }
+
+            elif name == "analyze_topic_pulse" and self.pulse is not None:
+                topic = str(args.get("topic") or "").strip()
+                if topic:
+                    tp = self.pulse.analyze_topic_pulse(topic, model_key=target_model)
+                    ui_commands.append({"type": "switch_tab", "tab": "studio"})
+                    ui_commands.append({"type": "run_topic_pulse", "topic": topic, "result": tp})
+                    tool_outputs["topic_pulse"] = {
+                        "query": tp["query"],
+                        "mood_headline": tp["mood_headline"],
+                        "sample_count": tp["sample_count"],
+                        "dominant_emotion": tp["dominant_emotion"],
+                        "emotion_mix": tp["emotion_mix"],
+                    }
+
+            elif name == "check_message_tone" and self.pulse is not None:
+                draft = str(args.get("text") or current_text or "").strip()
+                goal = str(args.get("goal") or "calm")
+                if draft:
+                    tg = self.pulse.run_tone_guard(draft, goal=goal)
+                    ui_commands.append({"type": "switch_tab", "tab": "studio"})
+                    ui_commands.append({"type": "run_tone_guard", "text": draft, "goal": goal, "result": tg})
+                    tool_outputs["tone_guard"] = {
+                        "verdict": tg["verdict"],
+                        "original": tg["original"],
+                        "rewrites": tg["rewrites"][:2],
+                    }
+
         return ui_commands, tool_outputs
 
     def emotion_autopilot_fallback(self, message: str, current_text: str, active_model: str):
         q = message.lower().strip()
+
+        m_mov = re.search(r"(?:movie|film|show|series|vibe of|reviews for|scan)\s+[\"']?([a-zA-Z0-9\s:'.-]{2,40})[\"']?", q)
+        if self.pulse is not None and any(k in q for k in ["movie", "film", "vibe of", "reviews for", "show ", "series "]):
+            raw_t = ""
+            if m_mov:
+                raw_t = m_mov.group(1).strip(" .?!\"'")
+            if raw_t and raw_t not in ("vibe", "scanner", "reviews"):
+                try:
+                    ui_cmds, outs = self.execute_tools([{"tool": "analyze_movie_vibe", "args": {"title": raw_t}}], current_text, active_model)
+                    mv = outs.get("movie_vibe", {})
+                    return (
+                        f"I scanned `{mv.get('sample_count')}` live reviews & headlines for **{mv.get('query')}**:\n"
+                        f"- **Audience Vibe:** **{mv.get('verdict_title')}** ({mv.get('dominant_emotion', '').title()} leads)\n"
+                        f"- **Hype & Joy:** `{mv.get('vibe_indices', {}).get('hype_joy')}%` | **Suspense:** `{mv.get('vibe_indices', {}).get('suspense')}%` | **Tearjerker:** `{mv.get('vibe_indices', {}).get('tearjerker')}%`",
+                        ui_cmds,
+                        ["Try movie: Interstellar", "Check tone of my draft email", "Open NLP Research & A/B Lab"],
+                    )
+                except Exception:
+                    pass
 
         if any(k in q for k in ["a/b", "ab test", "mcnemar", "bootstrap", "stress test", "negation flip", "ablation"]):
             ui_cmds, outs = self.execute_tools([{"tool": "run_ab_comparison", "args": {"text": current_text}}], current_text, active_model)
@@ -200,7 +262,10 @@ class EmotionAgentService:
             "2. `run_ab_comparison`: args={\"text\": \"...\", \"control\": \"bow_lr\", \"variant\": \"hybrid_ensemble\"} — opens NLP Research & A/B Lab and compares Control vs Champion on that text.\n"
             "3. `run_batch_journal`: args={\"lines\": [\"...\"]} (pass empty [] for 10-entry demo)\n"
             "4. `inspect_vocabulary`: args={\"emotion\": \"anger\"|\"fear\"|\"joy\"|\"love\"|\"sadness\"|\"surprise\", \"model\": \"hybrid_lr\"|\"bow_lr\"|\"tfidf_lr\"}\n"
-            "5. `switch_tab`: args={\"tab\": \"studio\"|\"research\"|\"batch\"}.\n\n"
+            "5. `analyze_movie_vibe`: args={\"title\": \"movie or TV show name\"} — pulls live reviews & Wikipedia critical reception and scores audience mood on screen.\n"
+            "6. `analyze_topic_pulse`: args={\"topic\": \"news or pop-culture topic\"} — scans live news & discussion mood pulse.\n"
+            "7. `check_message_tone`: args={\"text\": \"draft message\", \"goal\": \"warm\"|\"calm\"|\"excited\"|\"apology\"} — detects accidental harshness/fear and generates re-scored natural rewrites.\n"
+            "8. `switch_tab`: args={\"tab\": \"studio\"|\"research\"|\"batch\"}.\n\n"
             "Respond ONLY with valid JSON: {\"needs_tools\": true|false, \"tool_calls\": [{\"tool\": \"...\", \"args\": {...}}], \"direct_reply\": \"...\", \"follow_up_chips\": [\"...\"]}"
         )
         planner_input = f"Active Model: {active_model}\nCurrent Studio Text: {current_text or '(empty)'}\n\nConversation:\n{history_txt}\n\nUser: {message}"

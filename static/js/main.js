@@ -130,6 +130,20 @@ async function executeUiCommands(commands) {
     } else if (cmd.type === 'run_ab_arena') {
       await runLiveAbArena(cmd.text);
       await sleep(150);
+    } else if (cmd.type === 'run_movie_vibe' && cmd.result) {
+      switchPulseMode('movie');
+      $('movieQueryInput').value = cmd.title || cmd.result.query || '';
+      renderMovieVibeResults(cmd.result);
+      await sleep(140);
+    } else if (cmd.type === 'run_topic_pulse' && cmd.result) {
+      switchPulseMode('topic');
+      $('topicQueryInput').value = cmd.topic || cmd.result.query || '';
+      renderTopicPulseResults(cmd.result);
+      await sleep(140);
+    } else if (cmd.type === 'run_tone_guard' && cmd.result) {
+      if (cmd.text) { $('textInput').value = cmd.text; $('charCount').textContent = cmd.text.length; }
+      renderToneGuardResults(cmd.result);
+      await sleep(140);
     }
   }
   if (ctxPill.textContent.includes('operating website')) ctxPill.textContent = prev;
@@ -404,13 +418,13 @@ function drawEmotionAblationChart() {
   if (ablationChart) ablationChart.destroy();
   const datasets = emotionAblationMetric === 'f1'
     ? [
-        { label: 'CV Macro F1 %', data: ablation.map(a => a.cv_macro_f1), backgroundColor: '#7c3aed', borderRadius: 4 },
-        { label: 'Test Macro F1 %', data: ablation.map(a => a.test_macro_f1), backgroundColor: '#db2777', borderRadius: 4 },
-      ]
+      { label: 'CV Macro F1 %', data: ablation.map(a => a.cv_macro_f1), backgroundColor: '#7c3aed', borderRadius: 4 },
+      { label: 'Test Macro F1 %', data: ablation.map(a => a.test_macro_f1), backgroundColor: '#db2777', borderRadius: 4 },
+    ]
     : [
-        { label: '5-Fold CV Acc %', data: ablation.map(a => a.cv_accuracy), backgroundColor: '#7c3aed', borderRadius: 4 },
-        { label: 'Held-Out Test %', data: ablation.map(a => a.test_accuracy), backgroundColor: '#059669', borderRadius: 4 },
-      ];
+      { label: '5-Fold CV Acc %', data: ablation.map(a => a.cv_accuracy), backgroundColor: '#7c3aed', borderRadius: 4 },
+      { label: 'Held-Out Test %', data: ablation.map(a => a.test_accuracy), backgroundColor: '#059669', borderRadius: 4 },
+    ];
   ablationChart = new Chart($('ablationChart'), {
     type: 'bar',
     data: { labels: ablation.map(a => a.stage.replace(/^\d+\.\s*/, '')), datasets },
@@ -670,6 +684,207 @@ function renderSimpleMarkdown(md) {
   const lines = safe.split('\n'); let out = '', inList = false;
   for (const line of lines) { const t = line.trim(); if (t.startsWith('- ') || t.startsWith('* ')) { if (!inList) { out += '<ul>'; inList = true; } out += `<li>${t.slice(2)}</li>`; } else { if (inList) { out += '</ul>'; inList = false; } if (t) out += `<p>${t}</p>`; } }
   if (inList) out += '</ul>'; return out;
+}
+
+/* ---------------- Real-World Movie Vibe, Topic Mood & Tone Guard ---------------- */
+let lastMovieCard = null;
+const DRAFT_EXAMPLES = {
+  harsh: "Why did nobody check this before shipping? This delay is ridiculous and I am furious waiting around ASAP.",
+  anxious: "I am terrified we missed the deadline and the whole team is stressed that this client presentation will collapse.",
+};
+
+function switchPulseMode(mode) {
+  const isMovie = mode === 'movie';
+  $('pulse-mode-movie').classList.toggle('hidden', !isMovie);
+  $('pulse-mode-topic').classList.toggle('hidden', isMovie);
+  $('pulse-tab-movie').className = isMovie
+    ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-violet-900 shadow-sm'
+    : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+  $('pulse-tab-topic').className = !isMovie
+    ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-violet-900 shadow-sm'
+    : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+}
+
+function quickMovieScan(title) { $('movieQueryInput').value = title; scanMovieVibe(); }
+function quickTopicPulse(topic) { $('topicQueryInput').value = topic; scanTopicPulse(); }
+
+async function scanMovieVibe() {
+  const title = $('movieQueryInput').value.trim();
+  const errEl = $('moviePulseError');
+  errEl.classList.add('hidden');
+  if (!title) { errEl.textContent = 'Type a movie or series name first!'; errEl.classList.remove('hidden'); return; }
+  const btn = $('movieScanBtn');
+  const origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>Scanning live reviews...</span>';
+  try {
+    const res = await fetch('/api/pulse/movie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, model: $('modelSelect').value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Scan failed');
+    renderMovieVibeResults(data);
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+    lucide.createIcons();
+  }
+}
+
+function renderMovieVibeResults(data) {
+  lastMovieCard = data;
+  $('moviePulseResults').classList.remove('hidden');
+  const meta = data.meta || {};
+  const parts = [data.matched_title || data.query];
+  if (meta.premiered) parts.push(meta.premiered);
+  if (Array.isArray(meta.genres) && meta.genres.length) parts.push(meta.genres.slice(0, 2).join(' · '));
+  if (meta.rating) parts.push(`★ ${meta.rating}`);
+  $('movieMetaBadge').textContent = parts.join(' · ');
+  $('movieVerdictTitle').textContent = data.verdict_title;
+  $('movieVerdictSub').textContent = data.verdict_subtitle;
+  $('movieDominantEmoji').textContent = data.dominant_emoji || '🎬';
+  $('movieSampleNote').textContent = `Scored ${data.sample_count} real quotes (Wiki ${meta.wiki_quotes || 0} + News ${meta.news_quotes || 0})`;
+
+  const vi = data.vibe_indices || {};
+  const meterRows = [
+    { label: '😄 Feel-Good / Hype', val: vi.hype_joy || 0, color: '#d97706' },
+    { label: '😨 Edge-of-Seat Suspense', val: vi.suspense || 0, color: '#7c3aed' },
+    { label: '😭 Tearjerker Depth', val: vi.tearjerker || 0, color: '#2563eb' },
+    { label: '🔥 Heated Debate', val: vi.heat_rant || 0, color: '#dc2626' },
+  ];
+  $('movieMeters').innerHTML = meterRows.map(m =>
+    `<div class="space-y-1"><div class="flex justify-between text-[11px] font-bold"><span class="text-slate-700">${m.label}</span><span class="font-mono text-slate-900">${m.val}%</span></div><div class="w-full h-2 bg-white rounded-full overflow-hidden border border-purple-100"><div class="h-full rounded-full" style="width:${Math.min(100, m.val)}%;background:${m.color}"></div></div></div>`
+  ).join('');
+
+  $('movieTriggersRow').innerHTML = (data.top_triggers || []).slice(0, 8).map(t =>
+    `<span class="px-2 py-0.5 rounded-full bg-white border border-purple-200 text-[10px] font-mono text-violet-900 font-semibold">${escapeHtml(t.word)} (${t.count})</span>`
+  ).join('');
+
+  $('movieEvidenceList').innerHTML = (data.items || []).map(it =>
+    `<div class="p-2.5 rounded-xl bg-slate-50/90 border border-slate-200 space-y-1"><div class="flex items-center justify-between gap-2 text-[10px]"><span class="font-bold text-slate-500 truncate">${escapeHtml(it.source)}${it.date ? ' · ' + escapeHtml(it.date) : ''}</span><span class="shrink-0 px-2 py-0.5 rounded-full font-bold capitalize text-white" style="background:${it.color}">${it.emoji} ${it.emotion} ${Math.round(it.confidence)}%</span></div><p class="text-xs text-slate-800 leading-snug">${escapeHtml(it.text)}</p>${it.top_word ? `<div class="text-[10px] font-mono text-violet-700">Signal word: <strong>${escapeHtml(it.top_word)}</strong></div>` : ''}</div>`
+  ).join('');
+}
+
+async function copyMovieVibeCard() {
+  if (!lastMovieCard) return;
+  const vi = lastMovieCard.vibe_indices || {};
+  const txt = `${lastMovieCard.matched_title || lastMovieCard.query} — ${lastMovieCard.verdict_title}\nAnalyzed ${lastMovieCard.sample_count} real critic & news quotes with EmotiSense AI:\nFeel-Good: ${vi.hype_joy}% | Suspense: ${vi.suspense}% | Tearjerker: ${vi.tearjerker}% | Debate: ${vi.heat_rant}%`;
+  try { await navigator.clipboard.writeText(txt); $('movieSampleNote').textContent = 'Copied vibe card to clipboard!'; } catch { /* ignore */ }
+}
+
+async function scanTopicPulse() {
+  const topic = $('topicQueryInput').value.trim();
+  const errEl = $('topicPulseError');
+  errEl.classList.add('hidden');
+  if (!topic) { errEl.textContent = 'Type a topic first!'; errEl.classList.remove('hidden'); return; }
+  const btn = $('topicScanBtn');
+  const origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>Pulsing live mood...</span>';
+  try {
+    const res = await fetch('/api/pulse/topic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, model: $('modelSelect').value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Pulse failed');
+    renderTopicPulseResults(data);
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+    lucide.createIcons();
+  }
+}
+
+function renderTopicPulseResults(data) {
+  $('topicPulseResults').classList.remove('hidden');
+  $('topicMoodHeadline').textContent = `${data.query} · ${data.mood_headline}`;
+  $('topicDominantEmoji').textContent = data.dominant_emoji || '🌍';
+  const vi = data.vibe_indices || {};
+  $('topicWarmthVal').textContent = `${vi.warmth_temperature ?? 50}%`;
+  $('topicPolarVal').textContent = `${vi.polarization ?? 50}%`;
+  $('topicMixPills').innerHTML = Object.entries(data.emotion_mix || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([emo, pct]) => `<span class="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold capitalize">${(EMOTION_META[emo]?.emoji || '')} ${emo}: ${pct}%</span>`)
+    .join('');
+
+  $('topicFeedList').innerHTML = (data.items || []).map(it =>
+    `<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-2.5"><div class="space-y-0.5"><div class="text-[10px] font-bold text-slate-500">${escapeHtml(it.source)}</div><div class="text-xs font-semibold text-slate-900">${it.url ? `<a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" class="hover:underline">${escapeHtml(it.text)}</a>` : escapeHtml(it.text)}</div></div><span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold capitalize text-white" style="background:${it.color}">${it.emoji} ${it.emotion}</span></div>`
+  ).join('');
+}
+
+function tryDraftToneExample(kind) {
+  $('textInput').value = DRAFT_EXAMPLES[kind] || DRAFT_EXAMPLES.harsh;
+  $('charCount').textContent = $('textInput').value.length;
+  runToneGuard();
+}
+
+async function runToneGuard() {
+  const text = $('textInput').value.trim();
+  if (!text) { $('inputError').textContent = 'Paste a draft message above to check its tone.'; return; }
+  $('inputError').textContent = '';
+  const btn = $('toneGuardBtn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = 'Checking Tone...';
+  const apiKey = sessionStorage.getItem('emotisense_agent_apikey') || '';
+  const provider = sessionStorage.getItem('emotisense_agent_provider') || 'gemini';
+  try {
+    const res = await fetch('/api/tone-guard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'X-LLM-API-Key': apiKey } : {}) },
+      body: JSON.stringify({ text, goal: $('toneGoalSelect').value, provider }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Tone check failed');
+    renderToneGuardResults(data);
+    runPredictionSubmit();
+  } catch (err) {
+    $('inputError').textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+    lucide.createIcons();
+  }
+}
+
+function renderToneGuardResults(data) {
+  $('toneGuardResults').classList.remove('hidden');
+  const clsMap = {
+    warning: 'bg-rose-50 border-rose-200 text-rose-900',
+    caution: 'bg-amber-50 border-amber-200 text-amber-900',
+    good: 'bg-sky-50 border-sky-200 text-sky-900',
+    great: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+  };
+  const orig = data.original || {};
+  $('toneGuardVerdict').className = `p-3 rounded-xl text-xs font-bold border ${clsMap[data.status_level] || clsMap.good}`;
+  $('toneGuardVerdict').innerHTML = `<div>${orig.emoji || ''} ${escapeHtml(data.verdict)}</div><div class="text-[10px] font-mono opacity-80 mt-1">Source: ${escapeHtml(data.rewrite_source || '')}</div>`;
+
+  $('toneGuardRewrites').innerHTML = (data.rewrites || []).map(rw => {
+    const enc = encodeURIComponent(rw.text || '');
+    const dropTxt = rw.anger_delta < 0 ? `${rw.anger_delta}% anger` : (rw.emotion === 'joy' || rw.emotion === 'love' ? `+warmth verified` : `${rw.confidence}% ${rw.emotion}`);
+    return `<div class="p-3 rounded-xl bg-white border border-purple-200 space-y-2 shadow-sm"><div class="flex items-center justify-between gap-2"><span class="text-[11px] font-extrabold text-violet-900">${escapeHtml(rw.label)}</span><span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold">${rw.emoji} ${capitalise(rw.emotion)} ${Math.round(rw.confidence)}% · ${dropTxt}</span></div><p class="text-xs text-slate-800 leading-relaxed">"${escapeHtml(rw.text)}"</p><div class="text-[10px] text-slate-500">${escapeHtml(rw.why || '')}</div><div class="flex items-center gap-2 pt-1"><button type="button" onclick="applyToneRewrite('${enc}')" class="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-900 text-[10px] font-bold">Use &amp; Re-Analyze</button><button type="button" onclick="copyToneText('${enc}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold">Copy</button></div></div>`;
+  }).join('');
+}
+
+function applyToneRewrite(enc) {
+  const txt = decodeURIComponent(enc);
+  $('textInput').value = txt;
+  $('charCount').textContent = txt.length;
+  runPredictionSubmit();
+}
+
+async function copyToneText(enc) {
+  try { await navigator.clipboard.writeText(decodeURIComponent(enc)); } catch { /* ignore */ }
 }
 
 /* ---------------- Moveable / Draggable Chatbot Engine ---------------- */

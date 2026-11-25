@@ -19,6 +19,7 @@ from flask import Flask, Response, jsonify, render_template, request
 from flask_cors import CORS
 
 from core.agent_service import EmotionAgentService
+from core.live_pulse_service import LivePulseService
 from core.nlp_service import EMOTION_META, EmotionNLPService
 
 warnings.filterwarnings("ignore")
@@ -32,7 +33,8 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
 nlp_service = EmotionNLPService(BASE_DIR)
-agent_service = EmotionAgentService(nlp_service)
+live_pulse_service = LivePulseService(nlp_service)
+agent_service = EmotionAgentService(nlp_service, live_pulse_service=live_pulse_service)
 
 
 @app.route("/", methods=["GET"])
@@ -151,6 +153,50 @@ def batch_predict():
         return jsonify(nlp_service.run_batch_lines(entries))
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/tone-guard", methods=["POST"])
+def tone_guard():
+    if not nlp_service.is_ready:
+        return jsonify({"error": "NLP models not loaded."}), 500
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text", "")).strip()
+    goal = str(data.get("goal", "calm")).strip()
+    provider = str(data.get("provider", "")).strip()
+    try:
+        return jsonify(live_pulse_service.run_tone_guard(text, goal=goal, request_headers=request.headers, provider_override=provider))
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/pulse/movie", methods=["POST"])
+def pulse_movie():
+    if not nlp_service.is_ready:
+        return jsonify({"error": "NLP models not loaded."}), 500
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title") or data.get("query") or "").strip()
+    model_key = str(data.get("model") or nlp_service.get_primary_key()).strip()
+    try:
+        return jsonify(live_pulse_service.analyze_movie_vibe(title, model_key=model_key))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/pulse/topic", methods=["POST"])
+def pulse_topic():
+    if not nlp_service.is_ready:
+        return jsonify({"error": "NLP models not loaded."}), 500
+    data = request.get_json(silent=True) or {}
+    topic = str(data.get("topic") or data.get("query") or "").strip()
+    model_key = str(data.get("model") or nlp_service.get_primary_key()).strip()
+    try:
+        return jsonify(live_pulse_service.analyze_topic_pulse(topic, model_key=model_key))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/api/agent/chat", methods=["POST"])
